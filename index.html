@@ -1218,7 +1218,7 @@
     document.getElementById('dropbox-chooser-song').addEventListener('click', function () {
         Dropbox.choose({
             linkType: "direct",
-            multiselect: false,
+            multiselect: true,
             extensions: ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'],
             success: function (files) {
                 files.forEach(file => {
@@ -1265,7 +1265,6 @@
     window.addEventListener("beforeunload", () => {
         saveSessionDB();
     });
-    document.addEventListener("DOMContentLoaded", loadSessionDB);
 
   </script>
 </body>
