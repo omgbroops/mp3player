@@ -1,11 +1,10 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    
+    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
     <title>MP3 Player</title>
     <style>
         @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
@@ -382,6 +381,27 @@
     </style>
 </head>
 <body class="cs">
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="p59nefegjwdcdpi"></script>
+    <div id="songsModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Add Songs</p>
+                <button aria-label="close" onclick="closeModal('songsModal')">X</button>
+            </header>
+            <section class="modal-card-body">
+                <div class="modal-content-area" style="align-items: center; justify-content: center; display:flex;">
+                    <label class="button is-light" for="file-input">Upload Audio file<i class="fa-solid fa-arrow-up" style="margin-left:5px;"></i></label>
+                    <input type="file" id="file-input" class="button" accept="audio/*" style="display:none" multiple />
+                    <div class="divider">or</div>
+                    <div class="dropbox-import">
+                        <button class="button" style="margin-top:5px;" id="dropbox-chooser-song">Import from Dropbox</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
     <div id="importModal" class="modal">
         <div class="modal-background"></div>
         <div class="modal-card">
@@ -395,6 +415,9 @@
                         <label class="button is-light" for="session-input">Upload JSON File<i class="fa-solid fa-arrow-up" style="margin-left:5px;"></i></label>
                         <input type="file" id="session-input" accept=".json" style="display:none">
                         <div class="divider">or</div>
+                        <div class="dropbox-import">
+                            <button class="button" style="margin-top:5px;" id="dropbox-chooser">Import from Dropbox</button>
+                        </div>
                     </div>
                     <div class="paste-col">
                         <textarea id="importText" placeholder="Paste session JSON here..." style="padding: 15px; border-radius: 6px;" class="cs"></textarea>
@@ -409,11 +432,11 @@
         <div class="modal-background"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title">Save Session</p>
+                <p class="modal-card-title">Export Session</p>
                 <button aria-label="close" onclick="closeModal('exportModal')">X</button>
             </header>
             <section class="modal-card-body">
-                <div class="modal-content-area">
+                <div class="modal-content-area" style="justify-content: center;">
                     <a id="downloadbutton" class="button is-light" download="session.json">Download JSON File<i class="fa-solid fa-arrow-down" style="margin-left:5px;"></i></a>
                     <a id="copysession" class="button" target="_blank">Copy<i class="fa-solid fa-arrow-up-right-from-square" style="margin-left:5px;"></i></a>
                 </div>
@@ -423,14 +446,13 @@
     <div class="background-blur" id="background-blur"></div>
     <div id="botbuttons">
         <div class="addsongs">
-            <label for="file-input" class="bot-btn upload-btn button">+ Add Songs</label>
-            <input type="file" id="file-input" class="button" accept="audio/*" multiple />
+            <label class="bot-btn upload-btn button">+ Add Songs</label>
         </div>
         <div class="importsession">
             <label class="bot-btn impses-btn button">Import Session</label>
         </div>
         <div class="savesession">
-            <button class="bot-btn saveses-btn button">Save Session</button>
+            <button class="bot-btn saveses-btn button">Export Session</button>
         </div>
     </div>
     <div class="player" id="player">
@@ -689,6 +711,7 @@
     }
 
     fileInput.addEventListener('change', () => {
+        saveSessionDB();
         const files = fileInput.files;
         for (const file of files) {
             jsmediatags.read(file, {
@@ -998,6 +1021,7 @@
             player.style.top = "";
             player.style.left = "";
         }
+        saveSessionDB();
     });
     function openModal(id) {
         document.getElementById(id).classList.add('is-active');
@@ -1013,6 +1037,7 @@
     const copySesButton = document.getElementById('copysession');
     const downloadButton = document.getElementById('downloadbutton');
     document.querySelector('.importsession').addEventListener('click', () => { toggleModal('importModal') });
+    document.querySelector('.upload-btn').addEventListener('click', () => { toggleModal('songsModal') });
     document.querySelector('.savesession').addEventListener('click', () => {
         if (!document.getElementById('exportModal').classList.contains("is-active")) {
             const sessionData = exportSession();
@@ -1030,9 +1055,100 @@
             importSession(textData);
             closeModal('importModal');
         } catch (e) {
-            console.log(e);
+            alert(e);
         }
     }
+    const DB_NAME = "mp3_player";
+    const DB_VERSION = 1;
+    let db;
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains("session")) {
+                    db.createObjectStore("session", { keyPath: "id" });
+                }
+            };
+
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve();
+            };
+
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+    document.getElementById('dropbox-chooser').addEventListener('click', function () {
+        Dropbox.choose({
+            linkType: "direct",
+            multiselect: false,
+            extensions: ['.json'],
+            success: function (files) {
+                fetch(files[0].link)
+                    .then(res => res.json())
+                    .then(json => {
+                        imp(json);
+                        console.log(json);
+                    })
+                    .catch(err => alert("Error loading file: " + err));
+            }
+        });
+    });
+    document.getElementById('dropbox-chooser-song').addEventListener('click', function () {
+        Dropbox.choose({
+            linkType: "direct",
+            multiselect: false,
+            extensions: ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a'],
+            success: function (files) {
+                files.forEach(file => {
+                console.log('found');
+                    fetch(file.link)
+                        .then(res => res.blob())
+                        .then(blob => { 
+                            jsmediatags.read(blob, {
+                                onSuccess: function(tag) {
+                                    createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", blob);
+                                },
+                                onError: function(error) {
+                                    console.error("Error reading tags:", error);
+                                    createSongDiv(file.name, null, "Unknown artist", blob);
+                                }
+                            });
+                        })
+                        .catch(err => alert("Error loading file: " + err));
+                });
+            }
+        });
+    });
+
+    async function saveSessionDB() {
+        await openDB();
+        const tx = db.transaction(["session"], "readwrite");
+        const data = exportSession()
+        tx.objectStore("session").put({id: 1, ...data});
+        return tx.complete;
+    }
+
+    async function loadSessionDB() {
+        await openDB();
+        const tx = db.transaction(["session"], "readonly");
+        const req = tx.objectStore("session").get(1);
+
+        return new Promise((resolve) => {
+            tx.oncomplete = () => {
+                resolve(req.result || { settings: {}, playlist: [] });
+                imp(req.result);
+            };
+        });
+    }
+    window.addEventListener("beforeunload", () => {
+        saveSessionDB();
+    });
+    document.addEventListener("DOMContentLoaded", loadSessionDB);
+
   </script>
 </body>
 </html>
