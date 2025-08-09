@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Offline Music Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    
+    <title>MP3 Player</title>
     <style>
         @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
         @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
@@ -86,16 +87,16 @@
             padding-right: 8px;
             box-sizing: content-box; 
         }
-        .playlist::-webkit-scrollbar {
+        .cs::-webkit-scrollbar {
             width: 10px;
         }
 
-        .playlist::-webkit-scrollbar-track {
+        .cs::-webkit-scrollbar-track {
             background: transparent; 
             margin-top: 15px;
         }
 
-        .playlist::-webkit-scrollbar-thumb {
+        .cs::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
@@ -280,9 +281,145 @@
             filter: blur(20px) brightness(0.9);
         }
 
+        .modal.is-active .modal-background {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Glassy popup */
+        .modal-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: white;
+        }
+
+        .modal-card-head,
+        .modal-card-body {
+            background: transparent;
+            border: none;
+            color: white;
+        }
+
+        .modal-card-title {
+            color: white;
+        }
+
+        .modal-content-area {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .modal-content-area button,
+        .modal-content-area textarea {
+            flex: 1;
+        }
+
+        textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-weight: bold;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        .upload-col {
+            flex: 0.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .paste-col {
+            flex: 1.5;
+            position: relative;
+        }
+
+        .paste-col textarea {
+            width: 100%;
+            min-height: 200px;
+            padding-bottom: 2.5rem; /* space for button */
+        }
+
+        .import-btn {
+            position: absolute;
+            bottom: 16px;
+            right: 10px;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
     </style>
 </head>
-<body>
+<body class="cs">
+    <div id="importModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Import Session</p>
+                <button aria-label="close" onclick="closeModal('importModal')">X</button>
+            </header>
+            <section class="modal-card-body">
+                <div class="modal-content-area" style="align-items: center; display:flex;">
+                    <div class="upload-col">
+                        <label class="button is-light" for="session-input">Upload JSON File<i class="fa-solid fa-arrow-up" style="margin-left:5px;"></i></label>
+                        <input type="file" id="session-input" accept=".json" style="display:none">
+                        <div class="divider">or</div>
+                    </div>
+                    <div class="paste-col">
+                        <textarea id="importText" placeholder="Paste session JSON here..." style="padding: 15px; border-radius: 6px;" class="cs"></textarea>
+                        <button class="button import-btn" onclick="importFromText()">Import Now</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Save Session</p>
+                <button aria-label="close" onclick="closeModal('exportModal')">X</button>
+            </header>
+            <section class="modal-card-body">
+                <div class="modal-content-area">
+                    <a id="downloadbutton" class="button is-light" download="session.json">Download JSON File<i class="fa-solid fa-arrow-down" style="margin-left:5px;"></i></a>
+                    <a id="copysession" class="button" target="_blank">Copy<i class="fa-solid fa-arrow-up-right-from-square" style="margin-left:5px;"></i></a>
+                </div>
+            </section>
+        </div>
+    </div>
     <div class="background-blur" id="background-blur"></div>
     <div id="botbuttons">
         <div class="addsongs">
@@ -290,11 +427,10 @@
             <input type="file" id="file-input" class="button" accept="audio/*" multiple />
         </div>
         <div class="importsession">
-            <label for="session-input" class="bot-btn impses-btn button">Import Session</label>
-            <input type="file" id="session-input" class="button" accept=".json" />
+            <label class="bot-btn impses-btn button">Import Session</label>
         </div>
         <div class="savesession">
-            <button class="bot-btn saveses-btn button" onclick="exportSession();">Save Session</button>
+            <button class="bot-btn saveses-btn button">Save Session</button>
         </div>
     </div>
     <div class="player" id="player">
@@ -345,7 +481,7 @@
         </div>
 
         <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 25px;">
-            <div class="playlist ig fade-vertical-both" id="playlist"></div>
+            <div class="playlist ig fade-vertical-both cs" id="playlist"></div>
         </div>
     </div>
 
@@ -568,6 +704,7 @@
     });
 
     sessionInput.addEventListener('change', () => {
+        closeModal('importModal');
         const files = sessionInput.files;
         for (const file of files) {
             importSession(file);
@@ -793,43 +930,43 @@
         if (sHidden) { botbuttons.classList.add("hidden"); } else { bHidden = false; botbuttons.classList.remove("hidden"); }
     }
     function exportSession() {
-        const blob = new Blob([JSON.stringify({settings: {playerLeft: player.style.left, playerTop: player.style.top, backgroundHidden: backgroundImage.classList.contains("hidden"), playlistHidden: playlistEl.parentElement.classList.contains("hidden"), playerHidden: pHidden, botButtonsHidden: bHidden, screenHidden: sHidden, timestamp: audio.currentTime, shuffle: isShuffling, loop: isLooping, speed: speedControl.value, speedShow: !speedControl.parentElement.classList.contains("hidden"), bgvis: backgroundVis, vis: !canvas.classList.contains("hidden"), ci: currentIndex}, playlist: playlistSaving})], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "playlist.json";
-        a.click();
+        const sData = {settings: {playerLeft: player.style.left, playerTop: player.style.top, backgroundHidden: backgroundImage.classList.contains("hidden"), playlistHidden: playlistEl.parentElement.classList.contains("hidden"), playerHidden: pHidden, botButtonsHidden: bHidden, screenHidden: sHidden, timestamp: audio.currentTime, shuffle: isShuffling, loop: isLooping, speed: speedControl.value, speedShow: !speedControl.parentElement.classList.contains("hidden"), bgvis: backgroundVis, vis: !canvas.classList.contains("hidden"), ci: currentIndex}, playlist: playlistSaving};
+        return sData;
+    }
+    function imp(session) {
+        const importedPlaylist = session.playlist || session;
+        const settings = session.settings 
+        if (settings) {
+            if (!isShuffling && settings.shuffle) toggleShuffle(); 
+            if (!isLooping && settings.loop) toggleLoop(); 
+            if (settings.speedShow) speedControl.parentElement.classList.remove("hidden"); 
+            speedControl.value = settings.speed;
+            updateSpeed(0.5 + (parseFloat(settings.speed) / 100) * (1.5 - 0.5));
+            backgroundVis = settings.bgvis;
+            if (settings.vis && canvas.classList.contains("hidden")) canvas.classList.remove("hidden");
+            if (settings.backgroundHidden) { if (!backgroundImage.classList.contains("hidden")) backgroundImage.classList.add("hidden"); }
+            toggleScreen(settings.screenHidden, true);
+            togglePlayer(settings.playerHidden, true);
+            toggleBotButtons(settings.botButtonsHidden, true);
+            if (settings.playlistHidden) { playlistEl.parentElement.classList.add("hidden"); } else playlistEl.parentElement.classList.remove("hidden");
+            player.style.top = settings.playerTop;
+            player.style.left = settings.playerLeft;
+        }
+        for (let i = 0; i < importedPlaylist.length; i++) {
+            let v = importedPlaylist[i];
+            let picture = v.cover;
+            if (picture) {
+                picture = JSON.parse(picture);
+            }
+            createSongDiv(v.title, picture, v.artist, v.audioData, settings.ci, settings.timestamp, v)
+        }
     }
     function importSession(file) {
+        if (typeof file == 'string') return imp(JSON.parse(file));
         const reader = new FileReader();
         reader.onload = (e) => {
             const session = JSON.parse(e.target.result)
-            const importedPlaylist = session.playlist || session;
-            const settings = session.settings 
-            if (settings) {
-                if (!isShuffling && settings.shuffle) toggleShuffle(); 
-                if (!isLooping && settings.loop) toggleLoop(); 
-                if (settings.speedShow) speedControl.parentElement.classList.remove("hidden"); 
-                speedControl.value = settings.speed;
-                updateSpeed(0.5 + (parseFloat(settings.speed) / 100) * (1.5 - 0.5));
-                backgroundVis = settings.bgvis;
-                if (settings.vis && canvas.classList.contains("hidden")) canvas.classList.remove("hidden");
-                if (settings.backgroundHidden) { if (!backgroundImage.classList.contains("hidden")) backgroundImage.classList.add("hidden"); }
-                toggleScreen(settings.screenHidden, true);
-                togglePlayer(settings.playerHidden, true);
-                toggleBotButtons(settings.botButtonsHidden, true);
-                if (settings.playlistHidden) { playlistEl.parentElement.classList.add("hidden"); } else playlistEl.parentElement.classList.remove("hidden");
-                player.style.top = settings.playerTop;
-                player.style.left = settings.playerLeft;
-            }
-            for (let i = 0; i < importedPlaylist.length; i++) {
-                let v = importedPlaylist[i];
-                let picture = v.cover;
-                if (picture) {
-                    picture = JSON.parse(picture);
-                }
-                createSongDiv(v.title, picture, v.artist, v.audioData, settings.ci, settings.timestamp, v)
-            }
+            imp(session);
         };
         reader.readAsText(file);
     }
@@ -862,6 +999,40 @@
             player.style.left = "";
         }
     });
+    function openModal(id) {
+        document.getElementById(id).classList.add('is-active');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('is-active');
+    }
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.contains("is-active") ? modal.classList.remove("is-active") : modal.classList.add("is-active");
+    }
+
+    const copySesButton = document.getElementById('copysession');
+    const downloadButton = document.getElementById('downloadbutton');
+    document.querySelector('.importsession').addEventListener('click', () => { toggleModal('importModal') });
+    document.querySelector('.savesession').addEventListener('click', () => {
+        if (!document.getElementById('exportModal').classList.contains("is-active")) {
+            const sessionData = exportSession();
+            const blob = new Blob([JSON.stringify(sessionData)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            copySesButton.href = url;
+            downloadButton.href = url;
+        }
+        toggleModal('exportModal');
+    });
+    function importFromText() {
+        const textData = document.getElementById('importText').value;
+        document.getElementById('importText').value = "";
+        try {
+            importSession(textData);
+            closeModal('importModal');
+        } catch (e) {
+            console.log(e);
+        }
+    }
   </script>
 </body>
 </html>
