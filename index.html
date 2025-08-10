@@ -1310,12 +1310,17 @@
         });
     });
 
-    async function ssdb() {
+    async function saveSessionDB() {
+        if (isSavingSession || isLoadingSession) return;
+        isSavingSession = true;
+        saveSesLabel.classList.remove('hidden');
         if (!dbx) {
             await openDB();
             const tx = db.transaction(["session"], "readwrite");
             const data = exportSession()
             tx.objectStore("session").put({id: 1, ...data});
+            saveSesLabel.classList.add('hidden');
+            isSavingSession = false;
             return tx.complete;
         } else {
             const jsonString = JSON.stringify(exportSession());
@@ -1327,22 +1332,20 @@
                     mode: { ".tag": "overwrite" }
                 });
                 console.log(res);
+                saveSesLabel.classList.add('hidden');
+                isSavingSession = false;
             } catch (err) {
                 console.error("Dropbox upload failed:", err);
+                saveSesLabel.classList.add('hidden');
+                isSavingSession = false;
             } 
         }
     }
 
-    async function saveSessionDB() {
+    async function loadSessionDB() {
         if (isSavingSession || isLoadingSession) return;
-        isSavingSession = true;
-        saveSesLabel.classList.remove('hidden');
-        await ssdb();
-        saveSesLabel.classList.add('hidden');
-        isSavingSession = false;
-    }
-
-    async function lsdb() {
+        isLoadingSession = true;
+        impSesLabel.classList.remove('hidden');
         if (!dbx) {
             await openDB();
             const tx = db.transaction(["session"], "readonly");
@@ -1352,6 +1355,8 @@
                 tx.oncomplete = () => {
                     resolve(req.result || { settings: {}, playlist: [] });
                     imp(req.result);
+                    impSesLabel.classList.add('hidden');
+                    isLoadingSession = false;
                 };
             });
         } else {
@@ -1361,20 +1366,15 @@
             })
             .then(text => {
                 imp(JSON.parse(text));
+                impSesLabel.classList.add('hidden');
+                isLoadingSession = false;
             })
             .catch(err => {
                 console.error('Error fetching session.json:', err);
+                impSesLabel.classList.add('hidden');
+                isLoadingSession = false;
             });
         }
-    }
-
-    async function loadSessionDB() {
-        if (isSavingSession || isLoadingSession) return;
-        isLoadingSession = true;
-        impSesLabel.classList.remove('hidden');
-        await lsdb();
-        impSesLabel.classList.add('hidden');
-        isLoadingSession = false;
     }
 
     window.addEventListener("beforeunload", () => {
