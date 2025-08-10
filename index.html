@@ -1,12 +1,10 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    
-    <title>MP3 Player</title>
+    <title>New Tab</title>
     <style>
         @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
         @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
@@ -523,6 +521,8 @@
   <script src="https://cdn.jsdelivr.net/npm/jsmediatags"></script>
 
   <script>
+    let dbx;
+    if (token) dbx = new Dropbox.Dropbox({ accessToken: token });
     const audio = document.getElementById('audio');
     const fileInput = document.getElementById('file-input');
     const sessionInput = document.getElementById('session-input');
@@ -1122,7 +1122,7 @@
         else if (e.code === 'KeyD') {
             canDragPlayer = !canDragPlayer;
             if (canDragPlayer) { player.classList.add("candrag"); } else { player.classList.remove("candrag"); }
-        } else if (e.code === 'KeyL') canvas.classList.toggle("hidden");
+        } else if (e.code === 'KeyJ') canvas.classList.toggle("hidden");
         else if (e.code === 'KeyV') { volumeCol.classList.toggle("hidden"); checkBC(); }
         else if (e.code === 'KeyB') backgroundVis = !backgroundVis;
         else if (e.code === 'KeyH') {
@@ -1243,28 +1243,57 @@
     });
 
     async function saveSessionDB() {
-        await openDB();
-        const tx = db.transaction(["session"], "readwrite");
-        const data = exportSession()
-        tx.objectStore("session").put({id: 1, ...data});
-        return tx.complete;
+        if (!dbx) {
+            await openDB();
+            const tx = db.transaction(["session"], "readwrite");
+            const data = exportSession()
+            tx.objectStore("session").put({id: 1, ...data});
+            return tx.complete;
+        } else {
+            const jsonString = JSON.stringify(exportSession());
+            const blob = new Blob([jsonString], { type: "application/json" });
+            try {
+                const res = await dbx.filesUpload({
+                    path: "/MP3 Player/session.json",
+                    contents: blob,
+                    mode: { ".tag": "overwrite" }
+                });
+                console.log(res);
+            } catch (err) {
+                console.error("Dropbox upload failed:", err);
+            } 
+        }
     }
 
     async function loadSessionDB() {
-        await openDB();
-        const tx = db.transaction(["session"], "readonly");
-        const req = tx.objectStore("session").get(1);
+        if (!dbx) {
+            await openDB();
+            const tx = db.transaction(["session"], "readonly");
+            const req = tx.objectStore("session").get(1);
 
-        return new Promise((resolve) => {
-            tx.oncomplete = () => {
-                resolve(req.result || { settings: {}, playlist: [] });
-                imp(req.result);
-            };
-        });
+            return new Promise((resolve) => {
+                tx.oncomplete = () => {
+                    resolve(req.result || { settings: {}, playlist: [] });
+                    imp(req.result);
+                };
+            });
+        } else {
+            dbx.filesDownload({ path: '/MP3 Player/session.json' })
+            .then(response => {
+                return response.fileBlob.text();
+            })
+            .then(text => {
+                imp(JSON.parse(text));
+            })
+            .catch(err => {
+                console.error('Error fetching session.json:', err);
+            });
+        }
     }
     window.addEventListener("beforeunload", () => {
         saveSessionDB();
     });
+    document.addEventListener("DOMContentLoaded", loadSessionDB);
 
   </script>
 </body>
