@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+    	@import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
+        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+        body {
+            font: "Inter", sans-serif;
+            margin: 0;
+            background-color: #0e1116;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            user-select: none;
+        }
+        .button {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+		}
+        .hidden {
+        	display: none;
+        }
+    </style>
+</head>
+<body>
+<div style="gap: 10px; display:flex; align-items:center;">
+<button id="dropbox-oauth" class="button">Login with Dropbox</button>
+<button id="open-player" class="button">Open MP3 Player</button>
+</div>
+<script>
+let token;
+function dropboxOauth() {
+  const redirectUri = window.location.origin + window.location.pathname;
+  const oauthUrl = 'https://www.dropbox.com/oauth2/authorize?client_id=' + APP_KEY + '&response_type=token&redirect_uri='+encodeURIComponent(redirectUri);
+  const popup = window.open(oauthUrl, "dropboxAuth", "width=600,height=600");
+  let lastUrl = '';
+  const interval = setInterval(() => {
+    if (popup.closed) {
+      clearInterval(interval);
+      return;
+    }
+
+    try {
+      const currentUrl = popup.location.href;
+      if (currentUrl !== lastUrl) {
+        lastUrl = currentUrl;
+        if (lastUrl.includes('access_token=')) {
+            token = currentUrl.split('#access_token=')[1].split('&token_type=')[0];
+            clearInterval(interval);
+            popup.close();
+            document.getElementById('dropbox-oauth').classList.add('hidden');
+            return;
+        }
+      }
+    } catch (e) {
+      
+    }
+  }, 500);
+}
+document.getElementById("dropbox-oauth").addEventListener("click", function (e) {
+  dropboxOauth();
+});
+document.getElementById("open-player").addEventListener("click", function (e) {
+  fetch('https://cdn.jsdelivr.net/gh/omgbroops/mp3player@' + ver + '/index.html')
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      var newTab = window.open('about:blank', '_blank');
+      var doc = newTab.document;
+
+      doc.open();
+      doc.write(
+        '<!DOCTYPE html>' +
+        '<html>' +
+        '<head>' +
+        '<script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"><\/script>' +
+        '</head>' +
+        '<body>' +
+        '<script>const token = "' + token + '";<\/script>' +
+        '<script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" ' +
+        'id="dropboxjs" data-app-key="' + APP_KEY + '"><\/script>' +
+        html +
+        '</body>' +
+        '</html>'
+      );
+      doc.close();
+    });
+
+});
+</script>
+</body>
+
+</html>
