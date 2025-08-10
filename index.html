@@ -1343,7 +1343,9 @@
     }
 
     async function loadSessionDB() {
+        console.log(isSavingSession || isLoadingSession);
         if (isSavingSession || isLoadingSession) return;
+        console.log('loading now');
         isLoadingSession = true;
         impSesLabel.classList.remove('hidden');
         if (!dbx) {
@@ -1365,6 +1367,7 @@
                 return response.result.fileBlob.text();
             })
             .then(text => {
+                console.log('done');
                 imp(JSON.parse(text));
                 impSesLabel.classList.add('hidden');
                 isLoadingSession = false;
@@ -1376,7 +1379,7 @@
             });
         }
     }
-
+      
     window.addEventListener("beforeunload", () => {
         saveSessionDB();
     });
