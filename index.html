@@ -522,7 +522,7 @@
 
   <script>
     let dbx;
-    try { if (token) dbx = new Dropbox.Dropbox({ accessToken: token }); } catch(e) { };
+    try { if (token && (token.trim() != '')) dbx = new Dropbox.Dropbox({ accessToken: token }); } catch(e) { };
     const audio = document.getElementById('audio');
     const fileInput = document.getElementById('file-input');
     const sessionInput = document.getElementById('session-input');
