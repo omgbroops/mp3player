@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    
+    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
     <title>New Tab</title>
     <style>
         @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
@@ -59,20 +60,20 @@
             z-index: 1000;
             margin: 0;
         }
-        .upload-btn {
+        .impses-btn {
             bottom: 20px;        
             right: 20px;         
         }
-        .impses-btn {
+        .saveses-btn {
             bottom: 70px;        
             right: 20px;         
         }
-        .saveses-btn {
+        .resetses-btn {
             bottom: 120px;        
             right: 20px;         
         }
-        .resetses-btn {
-            bottom: 170px;        
+        .top-label {
+            top: 20px;        
             right: 20px;         
         }
         .controls, .bottom-controls {
@@ -228,6 +229,13 @@
             z-index: 20;
         }
 
+        .addsongs-btn {
+            position: absolute;
+            top: 15px;
+            right: 81px;
+            z-index: 20;
+        }
+
         .marquee-wrapper {
             position: relative;
             overflow: hidden;
@@ -371,7 +379,7 @@
         .paste-col textarea {
             width: 100%;
             min-height: 200px;
-            padding-bottom: 2.5rem; /* space for button */
+            padding-bottom: 2.5rem;
         }
 
         .import-btn {
@@ -383,15 +391,153 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
         }
+        
+        .fade {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0s 0.3s; 
+        }
+        
+        .fade.show {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease-in-out, visibility 0s 0s; 
+        }
+
+        .keyboard-shortcut {
+            display:flex;
+            align-items:center;
+            gap:5px;
+        }
+
+        .biggerkey {
+            max-width: 73px;
+        }
+
+        .bigkey {
+            max-width: 60px;
+        }
+
+        .smallkey {
+            max-width: 43px;
+        }
 
     </style>
 </head>
 <body class="cs">
-    <div id="impses-label" style="position:absolute;top:15px;right:225px;" class="hidden">
-        <label class="button bot-btn" style="cursor: default;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px;"></i>Importing session...</label>
-    </div>
-    <div id="saveses-label" style="position:absolute;top:15px;right:205px;" class="hidden">
-        <label class="button bot-btn" style="cursor: default;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px;"></i>Saving session...</label>
+    <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="p59nefegjwdcdpi"></script>
+    <span class="button bot-btn top-label fade" style="cursor: default;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="impses-label">Importing session...</span></span>
+    <span class="button bot-btn top-label fade" style="cursor: default;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="saveses-label">Saving session...</span></span>
+    <span class="button bot-btn top-label fade" style="cursor: default;"><i class="fa-solid fa-triangle-exclamation" style="margin:5px; margin-right:10px; color:#ff8b1f;"></i><span id="error-label">Error...</span></span>
+    <span class="button bot-btn top-label fade" style="cursor: default;"><i class="fa-solid fa-circle-exclamation" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="info-label">Info...</span></span>
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Keyboard Shortcuts</p>
+                <button aria-label="close" onclick="closeModal('shortcutsModal')">X</button>
+            </header>
+            <section class="modal-card-body">
+                <div class="modal-content-area" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: center;">
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button">V</button>
+                        <span style="margin-left: 10px;">Toggle player visualizer</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button smallkey">B</button>
+                        <span style="margin-left: 10px;">Toggle background visualizer</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button smallkey">S</button>
+                        <span style="margin-left: 10px;">Save session</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button smallkey">E</button>
+                        <span style="margin-left: 10px;">Export session</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button smallkey">I</button>
+                        <span style="margin-left: 10px;">Import session</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Ctrl</button>
+                        <button class="button smallkey">R</button>
+                        <span style="margin-left: 10px;">Reset session</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Shift</button>
+                        <button class="button smallkey">S</button>
+                        <span style="margin-left: 10px;">Toggle speed bar</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button bigkey">Shift</button>
+                        <button class="button smallkey">V</button>
+                        <span style="margin-left: 10px;">Toggle volume bar</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button biggerkey">Space</button>
+                        <span style="margin-left: 10px;">Pause/play</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">D</button>
+                        <span style="margin-left: 10px;">Enable player dragging</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey"><i class="fa-solid fa-arrow-left"></i></button>
+                        <span style="margin-left: 10px;">Previous song</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey"><i class="fa-solid fa-arrow-right"></i></button>
+                        <span style="margin-left: 10px;">Next song</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey"><i class="fa-solid fa-arrow-up"></i></button>
+                        <span style="margin-left: 10px;">Increase volume</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey"><i class="fa-solid fa-arrow-down"></i></button>
+                        <span style="margin-left: 10px;">Decrease volume</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">R</button>
+                        <span style="margin-left: 10px;">Loop/repeat</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">S</button>
+                        <span style="margin-left: 10px;">Shuffle</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">B</button>
+                        <span style="margin-left: 10px;">Toggle background image</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">P</button>
+                        <span style="margin-left: 10px;">Toggle player</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">O</button>
+                        <span style="margin-left: 10px;">Toggle bottom buttons</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">H</button>
+                        <span style="margin-left: 10px;">Toggle UI</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">C</button>
+                        <span style="margin-left: 10px;">Center player</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">/</button>
+                        <span style="margin-left: 10px;">Keyboard shortcuts</span>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
     <div id="songsModal" class="modal">
         <div class="modal-background"></div>
@@ -475,11 +621,8 @@
     </div>
     <div class="background-blur" id="background-blur"></div>
     <div id="botbuttons">
-        <div class="addsongs">
-            <label class="bot-btn upload-btn button">+ Add Songs</label>
-        </div>
         <div class="importsession">
-            <label class="bot-btn impses-btn button">Import Session</label>
+            <span class="bot-btn impses-btn button">Import Session</span>
         </div>
         <div class="savesession">
             <button class="bot-btn saveses-btn button">Export Session</button>
@@ -496,6 +639,9 @@
             </button>
             <button class="icon-button shuffle-btn ig" onclick="toggleShuffle()">
                 <img id="shuffle-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAqZQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////lqJh3wAAAOJ0Uk5TABx2laCopp2JahAdd5bO6vr/7ufJjG0TKoT78XIYJH72X1cUbk/yiFL1ikrth5RwFvRRNY9GrulUJ/dMge8RCUli7EeCk0XoCqJjoY6ckW8VtvNQfSND5gjwTWYMSOt7CxJsREtOVvmLsr3Gy83Kx8XCvrixq6ObhZmpxGW6p3QaF3GQU/iz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"/>
+            </button>
+            <button class="icon-button addsongs-btn ig" onclick="toggleModal('songsModal')">
+                <img id="addsongs-btn" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAkZQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////2Vzz5gAAAMJ0Uk5TACRdf4uz4/f24s6KfiNNqcb/xaeESwpXkO/tBBX58w83sqwxEo3kVOrYQmtZm5Krrq+eb0hY7sdqqnFB2rxsK9WmM4wG9WDJeyeCjsTbmOvBl2ltj9PSaC8b1tG9tGfQW7gi8lyApJ1kIQu3hlof5cO1KgXpRy4sZRqHU5N1gdzh3syglT85eJRWHf0Ov5YQpbk+TGOaia2Zg8tu12HKsXmc2c2FcPDm/LB9RDZV1L7IMhzsPKLxOxndEV7oB0YpYnrXJdawAAAM2klEQVR4nO3debBWdR3H8XO0QgRNGtSmhCgaIFwG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" />
             </button>
         </div>
         <div class="info">
@@ -552,7 +698,7 @@
 
   <script>
     let dbx;
-    try { if (token && (token.trim() != '')) dbx = new Dropbox.Dropbox({ accessToken: token }); } catch(e) { };
+    try { if (token && (token.trim() != '') && token != 'undefined') dbx = new Dropbox.Dropbox({ accessToken: token }); } catch(e) { };
     const audio = document.getElementById('audio');
     const fileInput = document.getElementById('file-input');
     const sessionInput = document.getElementById('session-input');
@@ -561,6 +707,7 @@
     const playIcon = document.getElementById('piconb');
     const shuffleBtn = document.getElementById('shuffle-btn');
     const loopBtn = document.getElementById('loop-btn');
+    const addSongsBtn = document.getElementById('addsongs-btn');
     const albumCover = document.getElementById('album-cover');
     const titleText = document.getElementById('title');
     const artistText = document.getElementById('artist');
@@ -568,6 +715,8 @@
     const dText = document.getElementById('duration');
     const saveSesLabel = document.getElementById('saveses-label');
     const impSesLabel = document.getElementById('impses-label');
+    const errorLabel = document.getElementById('error-label');
+    const infoLabel = document.getElementById('info-label');
     const backgroundImage = document.getElementById("background-blur");
     let playlist = [];
     let playlistSaving = [];
@@ -611,6 +760,57 @@
 
     let defaultColor = "#2e384a"
     let visualizerColor = defaultColor;
+
+    let savingInterval = 120000;
+
+    let msgQueue = [];
+    let msgDB = false;
+    function displayMsg(msg, type) {
+        if (!msg) return;
+        if (msgDB) {
+            msgQueue.push({msg: msg, type: type}); 
+            return;
+        }
+        if (type == 'error') {
+            errorMsg(msg);
+        } else {
+            infoMsg(msg);
+        }
+    }
+    function errorMsg(msg) {
+        msgDB = true;
+        errorLabel.textContent = msg;
+        errorLabel.parentElement.classList.add("show");
+        setTimeout(() => {
+            errorLabel.parentElement.classList.remove("show");
+            setTimeout(() => {
+                msgDB = false;
+                const nextMsg = msgQueue.shift();
+                if (nextMsg) {
+                    displayMsg(nextMsg.msg, nextMsg.type); 
+                }
+            }, 500);
+        }, 6000);
+    }
+    function infoMsg(msg) {
+        msgDB = true;
+        infoLabel.textContent = msg;
+        infoLabel.parentElement.classList.add("show");
+        setTimeout(() => {
+            infoLabel.parentElement.classList.remove("show");
+            setTimeout(() => {
+                msgDB = false;
+                const nextMsg = msgQueue.shift();
+                if (nextMsg) {
+                    displayMsg(nextMsg.msg, nextMsg.type); 
+                }
+            }, 500);
+        }, 6000);
+    }
+
+    function changeSavingInterval(i) {
+        savingInterval = i;
+    }
 
     function draw() {
         requestAnimationFrame(draw);
@@ -761,8 +961,10 @@
             playlistSaving.splice(piIndex, 1);
         }
         div.remove();
-        if (pIndex == currentIndex) {
+        if (pIndex >= currentIndex) {
             currentIndex--;
+        }
+        if (pIndex == currentIndex) {
             nextSong();
         }
     }
@@ -798,25 +1000,19 @@
     }
 
     fileInput.addEventListener('change', () => {
-        if (!(isSavingSession || isLoadingSession)) {
-            isLoadingSession = true;
-            impSesLabel.classList.remove('hidden');
-            const files = fileInput.files;
-            for (const file of files) {
-                jsmediatags.read(file, {
-                    onSuccess: async function(tag) {
-                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", file);
-                    },
-                    onError: function(error) {
-                        console.log('Error reading tags:', error);
-                        createSongDiv(file.name, null, "Unknown artist", file);
-                    }
-                });
-            }
+        const files = fileInput.files;
+        for (const file of files) {
+            jsmediatags.read(file, {
+                onSuccess: async function(tag) {
+                    createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", file);
+                },
+                onError: function(error) {
+                    displayMsg("Error reading song metadata: " + error, 'error');
+                    createSongDiv(file.name, null, "Unknown artist", file);
+                }
+            });
         }
         fileInput.value = "";
-        impSesLabel.classList.add('hidden');
-        isLoadingSession = false;
     });
 
     sessionInput.addEventListener('change', () => {
@@ -974,8 +1170,18 @@
             updateVolumeFromMouse(e);
         }
         if (isDraggingPlayer) {
-            player.style.left = `${e.clientX - offsetX}px`;
-            player.style.top = `${e.clientY - offsetY}px`;
+            let newTop = e.clientY - offsetY;
+            let newLeft = e.clientX - offsetX;
+            const maxLeft = window.innerWidth - player.offsetWidth;
+            const maxTop = window.innerHeight - player.offsetHeight;
+
+            if (newLeft < 20) newLeft = 20;
+            if (newTop < 20) newTop = 20;
+            if (newLeft > maxLeft - 20) newLeft = maxLeft - 20;
+            if (newTop > maxTop - 20) newTop = maxTop - 20;
+            
+            player.style.left = `${newLeft}px`;
+            player.style.top = `${newTop}px`;
         }
     });
 
@@ -1024,7 +1230,7 @@
     function formatTime(seconds) {
         if (isNaN(seconds)) return "0:00";
         const mins = Math.floor(seconds / 60);
-        const secs = Math.round(seconds % 60).toString().padStart(2, "0");
+        const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
         return `${mins}:${secs}`;
     }
 
@@ -1149,15 +1355,21 @@
             return;
         }
 
-        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') {
+        if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            saveSessionDB();
-            return;
+            if (e.code === 'KeyS') saveSessionDB();
+            else if (e.code === 'KeyR') toggleModal('resetModal');
+            else if (e.code === 'KeyV') canvas.classList.toggle("hidden");
+            else if (e.code === 'KeyB') backgroundVis = !backgroundVis;
+            else if (e.code === 'KeyE') toggleSS();
+            else if (e.code === 'KeyI') toggleModal('importModal');
+            return
         }
-        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyR') {
+        if (e.shiftKey) {
             e.preventDefault();
-            toggleModal('resetModal');
-            return;
+            if (e.code === 'KeyS') { speedCol.classList.toggle("hidden"); checkBC(); }
+            if (e.code === 'KeyV') { volumeCol.classList.toggle("hidden"); checkBC(); }
+            return
         }
         if (e.code === 'Space') {
             e.preventDefault();
@@ -1172,28 +1384,29 @@
         else if (e.code === 'KeyD') {
             canDragPlayer = !canDragPlayer;
             if (canDragPlayer) { player.classList.add("candrag"); } else { player.classList.remove("candrag"); }
-        } else if (e.code === 'KeyJ') canvas.classList.toggle("hidden");
+        }
         else if (e.code === 'KeyV') { volumeCol.classList.toggle("hidden"); checkBC(); }
-        else if (e.code === 'KeyB') backgroundVis = !backgroundVis;
+        else if (e.code === 'KeyB') backgroundImage.classList.toggle("hidden");
         else if (e.code === 'KeyH') {
             toggleScreen();
-        } else if (e.code === 'KeyK') backgroundImage.classList.toggle("hidden");
-        else if (e.code === 'KeyQ') playlistEl.parentElement.classList.toggle("hidden");
+        } else if (e.code === 'KeyQ') playlistEl.parentElement.classList.toggle("hidden");
         else if (e.code === 'KeyP') togglePlayer();
         else if (e.code === 'KeyO') toggleBotButtons();
-        else if (e.code === 'KeyE') toggleSS();
-        else if (e.code === 'KeyI') toggleModal('importModal');
-        else if (e.code === 'KeyA') fileInput.click();
+        else if (e.code === 'KeyA') toggleModal('songsModal');
         else if (e.code === 'KeyC') {
             player.style.top = "";
             player.style.left = "";
         }
+        else if (e.code === 'Escape') openModal();
+        else if (e.key === '/') toggleModal('shortcutsModal');
     });
     function openModal(id) {
         document.getElementById('importModal').classList.remove('is-active');
         document.getElementById('songsModal').classList.remove('is-active');
         document.getElementById('resetModal').classList.remove('is-active');
         document.getElementById('exportModal').classList.remove('is-active');
+        document.getElementById('shortcutsModal').classList.remove('is-active');
+        if (!id) return;
         document.getElementById(id).classList.add('is-active');
     }
     function closeModal(id) {
@@ -1207,7 +1420,6 @@
     const copySesButton = document.getElementById('copysession');
     const downloadButton = document.getElementById('downloadbutton');
     document.querySelector('.importsession').addEventListener('click', () => { toggleModal('importModal') });
-    document.querySelector('.upload-btn').addEventListener('click', () => { toggleModal('songsModal') });
     document.querySelector('.resetses-btn').addEventListener('click', () => { toggleModal('resetModal') });
     function toggleSS() {
         if (!document.getElementById('exportModal').classList.contains("is-active")) {
@@ -1223,16 +1435,16 @@
     function importFromText() {
         if (isSavingSession || isLoadingSession) return;
         isLoadingSession = true;
-        impSesLabel.classList.remove('hidden');
+        impSesLabel.parentElement.classList.add('show');
         const textData = document.getElementById('importText').value;
         document.getElementById('importText').value = "";
         try {
             importSession(textData);
             closeModal('importModal');
         } catch (e) {
-            alert(e);
+            displayMsg("Error importing session data: " + e, 'error');
         }
-        impSesLabel.classList.add('hidden');
+        impSesLabel.parentElement.classList.remove('show');
         isLoadingSession = false;
     }
     const DB_NAME = "mp3_player";
@@ -1266,19 +1478,18 @@
             extensions: ['.json'],
             success: function (files) {
                 isLoadingSession = true;
-                impSesLabel.classList.remove('hidden');
+                impSesLabel.parentElement.classList.add('show');
                 fetch(files[0].link)
                     .then(res => res.json())
                     .then(json => {
                         imp(json);
-                        console.log(json);
-                        impSesLabel.classList.add('hidden');
+                        impSesLabel.parentElement.classList.remove('show');
                         isLoadingSession = false;
                     })
                     .catch(err => { 
-                        impSesLabel.classList.add('hidden');
+                        impSesLabel.parentElement.classList.remove('show');
                         isLoadingSession = false;
-                        alert("Error loading file: " + err) 
+                        displayMsg("Error loading session data: " + err, 'error');
                     });
             }
         });
@@ -1298,12 +1509,12 @@
                                     createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", blob);
                                 },
                                 onError: function(error) {
-                                    console.error("Error reading tags:", error);
+                                    displayMsg("Error reading song metadata: " + error, 'error');
                                     createSongDiv(file.name, null, "Unknown artist", blob);
                                 }
                             });
                         })
-                        .catch(err => alert("Error loading file: " + err));
+                        .catch(err => displayMsg("Error importing song: " + e, 'error'));
                 });
                 closeModal('songsModal');
             }
@@ -1313,13 +1524,13 @@
     async function saveSessionDB() {
         if (isSavingSession || isLoadingSession) return;
         isSavingSession = true;
-        saveSesLabel.classList.remove('hidden');
+        saveSesLabel.parentElement.classList.add('show');
         if (!dbx) {
             await openDB();
             const tx = db.transaction(["session"], "readwrite");
             const data = exportSession()
             tx.objectStore("session").put({id: 1, ...data});
-            saveSesLabel.classList.add('hidden');
+            saveSesLabel.parentElement.classList.remove('show');
             isSavingSession = false;
             return tx.complete;
         } else {
@@ -1331,12 +1542,11 @@
                     contents: blob,
                     mode: { ".tag": "overwrite" }
                 });
-                console.log(res);
-                saveSesLabel.classList.add('hidden');
+                saveSesLabel.parentElement.classList.remove('show');
                 isSavingSession = false;
             } catch (err) {
-                console.error("Dropbox upload failed:", err);
-                saveSesLabel.classList.add('hidden');
+                displayMsg("Dropbox session save failed: " + err, 'error');
+                saveSesLabel.parentElement.classList.remove('show');
                 isSavingSession = false;
             } 
         }
@@ -1345,7 +1555,7 @@
     async function loadSessionDB() {
         if (isSavingSession || isLoadingSession) return;
         isLoadingSession = true;
-        impSesLabel.classList.remove('hidden');
+        impSesLabel.parentElement.classList.add('show');
         if (!dbx) {
             await openDB();
             const tx = db.transaction(["session"], "readonly");
@@ -1354,8 +1564,8 @@
             return new Promise((resolve) => {
                 tx.oncomplete = () => {
                     resolve(req.result || { settings: {}, playlist: [] });
-                    imp(req.result);
-                    impSesLabel.classList.add('hidden');
+                    imp(req.result || { settings: {}, playlist: [] });
+                    impSesLabel.parentElement.classList.remove('show');
                     isLoadingSession = false;
                 };
             });
@@ -1366,24 +1576,23 @@
             })
             .then(text => {
                 imp(JSON.parse(text));
-                impSesLabel.classList.add('hidden');
+                impSesLabel.parentElement.classList.remove('show');
                 isLoadingSession = false;
             })
             .catch(err => {
-                console.error('Error fetching session.json:', err);
-                impSesLabel.classList.add('hidden');
+                displayMsg("Error fetching session data: " + err, 'error');
+                impSesLabel.parentElement.classList.remove('show');
                 isLoadingSession = false;
             });
         }
     }
-      
-    window.addEventListener("beforeunload", () => {
-        saveSessionDB();
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadSessionDB();
     });
-    document.addEventListener("DOMContentLoaded", loadSessionDB);
     setInterval(() => {
         saveSessionDB();
-    }, 120000);
+    }, savingInterval);
 
   </script>
 </body>
