@@ -70,7 +70,7 @@ document.getElementById("dropbox-oauth").addEventListener("click", function (e) 
   dropboxOauth();
 });
 document.getElementById("open-player").addEventListener("click", function (e) {
-  fetch('https://cdn.jsdelivr.net/gh/omgbroops/mp3player@' + ver + '/index.html')
+  fetch('https://cdn.jsdelivr.net/gh/omgbroops/mp3player@latest/index.html?abc=' + (Math.floor(Math.random() * 100000)).toString())
     .then(function (r) { return r.text(); })
     .then(function (html) {
       var newTab = window.open('about:blank', '_blank');
