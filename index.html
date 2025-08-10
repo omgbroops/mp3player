@@ -528,6 +528,14 @@
                         <span style="margin-left: 10px;">Toggle UI</span>
                     </div>
                     <div class="keyboard-shortcut">
+                        <button class="button smallkey">Q</button>
+                        <span style="margin-left: 10px;">Toggle queue</span>
+                    </div>
+                    <div class="keyboard-shortcut">
+                        <button class="button smallkey">A</button>
+                        <span style="margin-left: 10px;">Add songs</span>
+                    </div>
+                    <div class="keyboard-shortcut">
                         <button class="button smallkey">C</button>
                         <span style="margin-left: 10px;">Center player</span>
                     </div>
@@ -620,7 +628,7 @@
         </div>
     </div>
     <div class="background-blur" id="background-blur"></div>
-    <div id="botbuttons">
+    <div id="botbuttons" class="hidden">
         <div class="importsession">
             <span class="bot-btn impses-btn button">Import Session</span>
         </div>
@@ -1275,7 +1283,7 @@
     const botbuttons = document.getElementById("botbuttons");
     let sHidden = false;
     let pHidden = false;
-    let bHidden = false;
+    let bHidden = true;
     function togglePlayer(v, f) {
         if (sHidden && !f) return;
         pHidden = f ? v : !pHidden;
@@ -1289,7 +1297,7 @@
     function toggleScreen(v, f) {
         sHidden = f ? v : !sHidden;
         if (sHidden) { player.classList.add("hidden"); } else { pHidden = false; player.classList.remove("hidden"); }
-        if (sHidden) { botbuttons.classList.add("hidden"); } else { bHidden = false; botbuttons.classList.remove("hidden"); }
+        if (sHidden) { botbuttons.classList.add("hidden"); } else { toggleBotButtons(bHidden, true); }
     }
     function exportSession() {
         const sData = {settings: {playerLeft: player.style.left, playerTop: player.style.top, backgroundHidden: backgroundImage.classList.contains("hidden"), playlistHidden: playlistEl.parentElement.classList.contains("hidden"), playerHidden: pHidden, botButtonsHidden: bHidden, screenHidden: sHidden, timestamp: audio.currentTime, shuffle: isShuffling, loop: isLooping, speed: speedControl.value, volume: volumeControl.value / 100, speedShow: !speedCol.classList.contains("hidden"), volumeShow: !volumeCol.classList.contains("hidden"), bgvis: backgroundVis, vis: !canvas.classList.contains("hidden"), ci: currentIndex}, playlist: playlistSaving};
