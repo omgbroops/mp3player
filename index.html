@@ -1996,7 +1996,7 @@
     function imp(session) {
         reset();
         const library = session.library || {allSongs: [], playlists: []};
-        const settings = session.settings || {};
+        const settings = session.settings || {notLoaded: true};
         currentPlaylist = settings.currentPlaylist || "0";
         currentVisiblePlaylist = currentVisiblePlaylist || "0";
         lastVisiblePlaylist = settings.lastVisiblePlaylist || "";
@@ -2013,7 +2013,7 @@
                 createSongDiv(v.title, picture, v.artist, v.audioData, settings.ci, settings.timestamp, v, importedPlaylist.id, v.id);
             }
         }
-        if (settings) {
+        if (settings && !settings.notLoaded) {
             if (settings.playlistHidden) { songsList.parentElement.classList.add("hidden"); } else songsList.parentElement.classList.remove("hidden");
             songsListOriginallyHidden = settings.playlistHidden;
             toggleScreen(settings.screenHidden, true);
