@@ -1994,6 +1994,7 @@
         return sData;
     }
     function imp(session) {
+        if (!session) session = {};
         reset();
         const library = session.library || {allSongs: [], playlists: []};
         const settings = session.settings || {notLoaded: true};
@@ -2294,7 +2295,7 @@
             return new Promise((resolve) => {
                 tx.oncomplete = () => {
                     resolve(req.result || { settings: {}, playlists: [] });
-                    imp(req.result || { settings: {}, playlists: [] });
+                    imp(req.result);
                     impSesLabel.parentElement.classList.remove('show');
                     isLoadingSession = false;
                 };
