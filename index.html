@@ -1278,6 +1278,7 @@
             settingsUI.classList.add("hidden");
             libraryUI.classList.add("hidden");
             player.classList.remove("hidden");
+            botbuttons.parentElement.classList.remove('hidden');
             resetLibraryUI();
             if (songsList.parentElement.parentElement != player) player.appendChild(songsList.parentElement);   
             songsList.parentElement.classList.remove('hidden');
@@ -1362,6 +1363,7 @@
             if (songInAllSongs !== -1) {
                 let savedIndex = currentIndex;
                 const playlist = getPlaylist(null, null, playlistId);
+                if (!playlist) return;
                 const pIndex = playlist.songs.findIndex(a => a == id);
                 if (pIndex !== -1) {
                     playlist.songs.splice(pIndex, 1);
@@ -1371,19 +1373,28 @@
                 if (piIndex !== -1) {
                     psPlaylist.songs.splice(piIndex, 1);
                 }
-                allSongs[songInAllSongs].div.remove();
-                allSongs.splice(songInAllSongs, 1);
+                const song = allSongs[songInAllSongs];
+                const playlistInSongsPlaylist = song.playlists.findIndex(p => p == playlistId);
+                if (playlistInSongsPlaylist != -1) song.playlists.splice(playlistInSongsPlaylist, 1);
+                if (song.playlists.length == 0) {
+                    song.div.remove();
+                    allSongs.splice(songInAllSongs, 1);
+                    songsSavingData.allSongs.splice(songsSavingData.allSongs.findIndex(a => a.id == id), 1);
+                } else {
+                    song.div.dataset.playlists = JSON.stringify(song.playlists);
+                }
                 if (pIndex <= currentIndex) {
                     currentIndex--;
                 }
                 if (pIndex == savedIndex) {
                     nextSong();
                 }
-                songsSavingData.allSongs.splice(songsSavingData.allSongs.findIndex(a => a.id == id), 1)
+                if (playlistId == currentVisiblePlaylist) playlistSubinfoText.textContent = playlist.songs.length + " songs";
+                updatePlaylistUI();
             }
         }
 
-        async function createSongDiv(title, picture, artist, file, ci, ts, pi, playlistAddingTo, usedId) {
+        async function createSongDiv(title, picture, artist, file, ts, pi, playlistAddingTo, usedId, playIfFirst) {
             if (!playlistAddingTo) playlistAddingTo = currentPlaylist;
             let id;
             if (usedId) { id = usedId; } else { id = lastUsedId.toString(); lastUsedId++; }
@@ -1397,8 +1408,8 @@
                 div.dataset.playlists = JSON.stringify(songAlreadyExists.playlists);
                 psPlaylist.songs.push(id);
                 playlist.songs.push(id);
-                allSongs.push(songAlreadyExists);
                 playlistSubinfoText.textContent = playlist.songs.length + " songs";
+                updatePlaylistUI();
                 return div;
             } else {
                 const div = document.createElement('div');
@@ -1428,6 +1439,7 @@
                 const playlist = getPlaylist(null, null, playlistAddingTo);
                 const psPlaylist = getPSPlaylist(null, playlistAddingTo);
                 const playlistItem = pi || await buildPlaylistItem(songItem);
+                div.style.order = playlist.songs.length;
                 psPlaylist.songs.push(id);
                 playlist.songs.push(id);
                 allSongs.push(songItem);
@@ -1436,11 +1448,11 @@
                 const btn = div.querySelector('button');
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    removeSong(id, playlistItem, playlistAddingTo);
+                    removeSong(id, playlistItem, currentVisiblePlaylist);
                 });
                 songsList.appendChild(div);
-                if (!audio.src) {
-                    loadSong(ci || 0, ts);
+                if (!audio.src && playIfFirst) {
+                    loadSong(0);
                 }
                 return div;
             }
@@ -1521,11 +1533,11 @@
             for (const file of files) {
                 jsmediatags.read(file, {
                     onSuccess: async function(tag) {
-                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", file, null, null, null, atp);
+                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", file, null, null, atp, null, true);
                     },
                     onError: function(error) {
                         displayMsg("Error reading song metadata: " + error, 'error');
-                        createSongDiv(file.name, null, "Unknown artist", file, null, null, null, atp);
+                        createSongDiv(file.name, null, "Unknown artist", file, null, null, atp, null, true);
                     }
                 });
             }
@@ -2012,8 +2024,11 @@
                         if (picture) {
                             picture = JSON.parse(picture);
                         }
-                        createSongDiv(v.title, picture, v.artist, v.audioData, settings.ci, settings.timestamp, v, importedPlaylist.id, v.id);
+                        createSongDiv(v.title, picture, v.artist, v.audioData, settings.timestamp, v, importedPlaylist.id, v.id);
                     }
+                }
+                if (!audio.src) {
+                    loadSong(settings.ci || 0, settings.timestamp);
                 }
                 if (settings && !settings.notLoaded) {
                     if (settings.playlistHidden) { songsList.parentElement.classList.add("hidden"); } else songsList.parentElement.classList.remove("hidden");
@@ -2243,7 +2258,7 @@
                             .then(blob => { 
                                 jsmediatags.read(blob, {
                                     onSuccess: function(tag) {
-                                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", blob, null, null, null, atp);
+                                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", blob, null, null, atp, null, true);
                                     },
                                     onError: function(error) {
                                         displayMsg("Error reading song metadata: " + error, 'error');
