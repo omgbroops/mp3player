@@ -2607,6 +2607,7 @@
 
             function updatePreview() {
                 htmlPreview.srcdoc = htmlEditor.getValue() + `<script> window.addEventListener('keydown', e => {
+                    e.preventDefault();
                     window.parent.postMessage({
                     type: 'keydown',
                     key: e.key,
