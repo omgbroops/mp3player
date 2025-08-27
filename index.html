@@ -2626,9 +2626,9 @@
             
             if (e.data.type === 'keydown') {
                 
-                const { ctrlKey, code } = e.data;
+                const { shiftKey, code } = e.data;
 
-                if (ctrlKey) {
+                if (shiftKey) {
                     if (code === 'KeyS') saveSessionDB();
                     else if (code === 'Space') togglePlay();
                     else if (code === 'ArrowRight') nextSong();
