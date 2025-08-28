@@ -617,7 +617,7 @@
             <div id="resizer"></div>
 
             <div id="preview-container">
-                <iframe id="preview"></iframe>
+                <iframe id="preview" sandbox="allow-scripts allow-forms allow-modals allow-same-origin"></iframe>
             </div>
         </div>
         <div id="mp3player" class="screen">
@@ -2253,7 +2253,7 @@
                     if (settings.backgroundHidden) { if (!backgroundImage.classList.contains("hidden")) backgroundImage.classList.add("hidden"); }
                     player.style.top = settings.playerTop;
                     player.style.left = settings.playerLeft;
-                    player.style.zIndex = 5;
+                    player.style.zIndex = 8;
                     libraryUI.style.top = settings.libraryUITop;
                     libraryUI.style.left = settings.libraryUILeft;
                     settingsUI.style.top = settings.settingsUITop;
@@ -2331,8 +2331,12 @@
                 if (apHidden) {
                     if (player.parentElement === audioPlayerScreen) {
                         audioPlayerScreenParent.appendChild(player); 
+                        if (pHidden) togglePlayer();
+                        player.style.zIndex = 8;
                     } else {
                         audioPlayerScreen.appendChild(player);
+                        lastWindowInteractedWith = player;
+                        player.style.zIndex = 2;
                     }
                 } else {
                     togglePlayer();
@@ -2572,7 +2576,46 @@
     </script>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
     <script>
-        require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+        const getFlashCode = (url) => { return `<html lang="en">
+                    <head>
+                        <meta charset="utf-8" \/>
+                        <meta http-equiv="x-ua-compatible" content="ie=edge">
+                        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" \/>
+                    <\/head>
+                    <body>
+                    <script src="https:\/\/cdn.jsdelivr.net\/npm\/ruffle-mirror@latest\/ruffle.js"><\/script>
+                    <div id="game-container"><\/div>
+                    <style>
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                        height: 100%;
+                        width: 100%;
+                        overflow: hidden;
+                    }
+                    #game-container {
+                        height: 100%;
+                        width: 100%;
+                    }
+                    ruffle-player {
+                        height: 100%;
+                        width: 100%;
+                        display: block;
+                    }
+                    canvas {
+                        height: 100%;
+                        width: 100%;
+                        display: block;
+                    }
+                    <\/style>
+                    <script>
+                        const ruffle = window.RufflePlayer?.newest();
+                        const player = ruffle.createPlayer();
+                        document.getElementById("game-container").appendChild(player);
+                        player.load("${url.replace(/\//g, '\\/')}");
+                    <\/script>
+                    <\/body>`}
+        try { require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } }) } catch(e) { };
         const toggleFullscreenBtn = document.getElementById("toggleFullscreen");
         const previewContainer = document.getElementById("preview-container");
         let isHTMLFullscreen = false;
@@ -2582,54 +2625,128 @@
             previewContainer.classList.toggle("fullscreen", isHTMLFullscreen);
         });
 
-        require(['vs/editor/editor.main'], function () {
-            const htmlEditor = monaco.editor.create(document.getElementById('htmltextbox'), {
-                value: `<!DOCTYPE html>
-        <html>
-        <head>
-        <style>
-            body { background: #111; color: #0f0; font-family: monospace; }
-        </style>
-        </head>
-        <body>
-        <h1>HTML Test</h1>
-        <script>
-            console.log("JS is working!");
-        <\/script>
-        </body>
-        </html>`,
-                language: 'html',
-                theme: 'vs-dark',
-                automaticLayout: true
-            });
-
-            const htmlPreview = document.getElementById('preview');
-
-            function updatePreview() {
-                htmlPreview.srcdoc = htmlEditor.getValue() + `<script> window.addEventListener('keydown', e => {
-                    e.preventDefault();
-                    window.parent.postMessage({
-                    type: 'keydown',
-                    key: e.key,
-                    code: e.code,
-                    shiftKey: e.shiftKey,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    metaKey: e.metaKey
-                    }, '*');
-                });<\/script>`;
+        const htmlPreview = document.getElementById('preview');
+        let vsLoaded;
+        let htmlEditor;
+        function updatePreview() {
+            let value = vsLoaded ? htmlEditor.getValue() : htmlEditor.value;
+            try {   
+                if (value.includes(".swf") && value.includes("embed") && value.includes("object")) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(value, 'text/html');
+                    const embed = doc.querySelector('embed');
+                    const param = doc.querySelector('param');
+                    const eu = embed.getAttribute('src');
+                    const pu = param.getAttribute('value');
+                    value = getFlashCode(eu.includes("https://") ? eu : pu);
+                }
+            } catch(e) {
+                console.log(e);
             }
+            htmlPreview.srcdoc = value + `<style>body{ margin: 0px; }</style><script> window.addEventListener('keydown', e => {
+                e.preventDefault();
+                window.parent.postMessage({
+                type: 'keydown',
+                key: e.key,
+                code: e.code,
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                metaKey: e.metaKey
+                }, '*');
+            });<\/script>`;
+        }
+        try {
+            require(['vs/editor/editor.main'], function () {
+                try {
+                    htmlEditor = monaco.editor.create(document.getElementById('htmltextbox'), {
+                        value: `<!DOCTYPE html>
+                <html>
+                <head>
+                <style>
+                    body { background: #111; color: #0f0; font-family: monospace; }
+                </style>
+                </head>
+                <body>
+                <h1>HTML Test</h1>
+                <script>
+                    console.log("JS is working!");
+                <\/script>
+                </body>
+                </html>`,
+                        language: 'html',
+                        theme: 'vs-dark',
+                        automaticLayout: true
+                    });
+                    vsLoaded = true;
+                    htmlEditor.onDidChangeModelContent(updatePreview);
+                    updatePreview();
+                } catch(e) {
+                    console.log(e);
+                    const div = document.getElementById("htmltextbox");
+                    htmlEditor = document.createElement("textarea");
+                    htmlEditor.value = div.textContent;
+                    htmlEditor.id = div.id;
+                    htmlEditor.className = div.className;
+                    htmlEditor.style.cssText = div.style.cssText;
+                    htmlEditor.placeholder = "Enter HTML code here..."
+                    htmlEditor.value = `<!DOCTYPE html>
+                    <html>
+                    <head>
+                    <style>
+                        body { background: #111; color: #0f0; font-family: monospace; }
+                    </style>
+                    </head>
+                    <body>
+                    <h1>HTML Test</h1>
+                    <script>
+                        console.log("JS is working!");
+                    <\/script>
+                    </body>
+                    </html>`;
 
-            htmlEditor.onDidChangeModelContent(updatePreview);
+                    div.replaceWith(htmlEditor);
+                    htmlEditor.addEventListener('input', updatePreview);
+                    updatePreview();
+                }
+
+            });
+        } catch(e) {
+            console.log(e);
+            const div = document.getElementById("htmltextbox");
+            htmlEditor = document.createElement("textarea");
+            htmlEditor.value = div.textContent;
+            htmlEditor.id = div.id;
+            htmlEditor.className = div.className;
+            htmlEditor.style.cssText = div.style.cssText;
+            htmlEditor.placeholder = "Enter HTML code here..."
+            htmlEditor.value = `<!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+                body { background: #111; color: #0f0; font-family: monospace; }
+            </style>
+            </head>
+            <body>
+            <h1>HTML Test</h1>
+            <script>
+                console.log("JS is working!");
+            <\/script>
+            </body>
+            </html>`;
+
+            div.replaceWith(htmlEditor);
+            htmlEditor.addEventListener('input', updatePreview);
             updatePreview();
-        });
+        }
+            
         window.addEventListener('message', (e) => {
             
             if (e.data.type === 'keydown') {
                 
-                const { shiftKey, code } = e.data;
+                const { shiftKey, ctrlKey, code } = e.data;
 
-                if (shiftKey) {
+                if (shiftKey || ctrlKey) {
                     if (code === 'KeyS') saveSessionDB();
                     else if (code === 'Space') togglePlay();
                     else if (code === 'ArrowRight') nextSong();
@@ -2641,8 +2758,12 @@
                     else if (code === "KeyP") {
                         if (player.parentElement === audioPlayerScreen) {
                             audioPlayerScreenParent.appendChild(player); 
+                            if (pHidden) togglePlayer();
+                            player.style.zIndex = 8;
                         } else {
                             audioPlayerScreen.appendChild(player);
+                            lastWindowInteractedWith = player;
+                            player.style.zIndex = 2;
                         }
                     } else if (code === 'KeyF') {
                         isHTMLFullscreen = !isHTMLFullscreen;
