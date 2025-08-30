@@ -1,0 +1,4 @@
+const ver = "v2.4r";
+const APP_KEY = 'p59nefegjwdcdpi';
+
+fetch('https://cdn.jsdelivr.net/gh/omgbroops/mp3player@' + ver + '/index.html').then(response => response.text()).then(html => { const container = document.querySelector('body'); container.innerHTML = '<!DOCTYPE html>' + '<html>' + '<head>' + '<script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"><\/script>' + '</head>' + '<body>' + '<script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" ' + 'id="dropboxjs" data-app-key="' + APP_KEY + '"><\/script>' + html + '</body>' + '</html>'; container.querySelectorAll('script').forEach(oldScript => { const newScript = document.createElement('script'); if (oldScript.src) { newScript.src = oldScript.src; newScript.async = false; } else { newScript.textContent = oldScript.textContent; } oldScript.parentNode.replaceChild(newScript, oldScript); }); });
