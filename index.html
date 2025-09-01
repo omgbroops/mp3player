@@ -2687,10 +2687,11 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 const req = tx.objectStore("session").get(1);
 
                 return new Promise((resolve) => {
-                    tx.oncomplete = () => {
+                    tx.oncomplete = async () => {
                         resolve(req.result || { settings: {}, playlists: [] });
                         imp(req.result);
                         impSesLabel.parentElement.classList.remove('show');
+                        await saveSessionDB(true);
                         isLoadingSession = false;
                     };
                 });
