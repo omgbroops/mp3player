@@ -317,6 +317,24 @@
                 mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
             }
 
+            .fade-all {
+                -webkit-mask-image: 
+                    linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%),
+                    linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+                mask-image: 
+                    linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%),
+                    linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+
+                -webkit-mask-composite: intersect;
+                mask-composite: intersect;
+
+                -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+
+                -webkit-mask-size: 100% 100%;
+                mask-size: 100% 100%;
+            }
+
             .hidden {
                 display: none;
             }
@@ -927,7 +945,7 @@
                     <div class="songs-list ig fade-vertical-both cs" id="songs-list"></div>
                 </div>
             </div>
-            <div class="player library-ui hidden" id="library-ui">
+            <div class="player hidden" id="library-ui">
                 <button class="icon-button loop-btn ig" style="top:20px; transform: rotate(45deg);">
                     <img id="close-library" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAkZQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////2Vzz5gAAAMJ0Uk5TACRdf4uz4/f24s6KfiNNqcb/xaeESwpXkO/tBBX58w83sqwxEo3kVOrYQmtZm5Krrq+eb0hY7sdqqnFB2rxsK9WmM4wG9WDJeyeCjsTbmOvBl2ltj9PSaC8b1tG9tGfQW7gi8lyApJ1kIQu3hlof5cO1KgXpRy4sZRqHU5N1gdzh3syglT85eJRWHf0Ov5YQpbk+TGOaia2Zg8tu12HKsXmc2c2FcPDm/LB9RDZV1L7IMhzsPKLxOxndEV7oB0YpYnrXJdawAAAM2klEQVR4nO3debBWdR3H8XO0QgRNGtSmhCgaIFwG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">
                 </button>
@@ -964,6 +982,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
+             <div class="player hidden" id="oscillator-ui" style="max-width: 445px;">
+                <button class="icon-button loop-btn ig" style="top:20px; transform: rotate(45deg);" onclick="toggleOscillator();">
+                    <img id="close-oscillator" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAkZQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////2Vzz5gAAAMJ0Uk5TACRdf4uz4/f24s6KfiNNqcb/xaeESwpXkO/tBBX58w83sqwxEo3kVOrYQmtZm5Krrq+eb0hY7sdqqnFB2rxsK9WmM4wG9WDJeyeCjsTbmOvBl2ltj9PSaC8b1tG9tGfQW7gi8lyApJ1kIQu3hlof5cO1KgXpRy4sZRqHU5N1gdzh3syglT85eJRWHf0Ov5YQpbk+TGOaia2Zg8tu12HKsXmc2c2FcPDm/LB9RDZV1L7IMhzsPKLxOxndEV7oB0YpYnrXJdawAAAM2klEQVR4nO3debBWdR3H8XO0QgRNGtSmhCgaIFwG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">
+                </button>
+                <div class="title is-3" id="oscillator-title" style="margin-bottom:15px;"><i class="fa-solid fa-headphones" style="margin-right: 12px;"></i>Oscillator</div>
+                <canvas id="waveformCanvas" height="150px" width="400px" style="filter: brightness(1.8);" class="fade-all"></canvas>
             </div>
             <div class="player hidden" id="settings-ui">
                 <button class="icon-button loop-btn ig" style="top:20px; transform: rotate(45deg);">
@@ -1180,6 +1205,10 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         const eqCanvas = document.getElementById('eqCanvas');
         const eqCtx = eqCanvas.getContext('2d');
 
+        const oscillator = document.getElementById("oscillator-ui");
+        const waveformCanvas = document.getElementById("waveformCanvas");
+        const waveformCtx = waveformCanvas.getContext("2d");
+
         let filters = [];
         const freqs = [60, 150, 400, 1000, 2500, 6000, 15000];
         const points = freqs.map(() => ({ gain: 0 }));
@@ -1192,6 +1221,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
+        const timeDataArray = new Uint8Array(analyser.fftSize);
 
         let source = audioCtx.createMediaElementSource(audio);
         source.connect(analyser);
@@ -1199,8 +1229,10 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
         canvas.classList.toggle("hidden");
 
-        let defaultColor = "#2e384a"
+        let defaultColor = "#2e384a";
+        let brighterDefaultColor = "#536585";
         let visualizerColor = defaultColor;
+        let brighterVisualizerColor = brighterDefaultColor;
 
         function resize() {
             const dpr = window.devicePixelRatio || 1;
@@ -1253,20 +1285,20 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             });
 
             eqCtx.lineWidth = 3;
-            eqCtx.strokeStyle = "#31343b";
+            eqCtx.strokeStyle = backgroundImage.classList.contains("hidden") ? defaultColor : visualizerColor;
             eqCtx.beginPath();
             for (let i = -1; i < pts.length - 2; i++) {
-            const p0 = pts[i] || pts[0];
-            const p1 = pts[i + 1];
-            const p2 = pts[i + 2];
-            const p3 = pts[i + 3] || pts[pts.length - 1];
+                const p0 = pts[i] || pts[0];
+                const p1 = pts[i + 1];
+                const p2 = pts[i + 2];
+                const p3 = pts[i + 3] || pts[pts.length - 1];
 
-            for (let t = 0; t <= 1; t += 0.05) {
-                const x = catmullRom(p0.x, p1.x, p2.x, p3.x, t);
-                const y = catmullRom(p0.y, p1.y, p2.y, p3.y, t);
-                if (i === -1 && t === 0) eqCtx.moveTo(x, y);
-                else eqCtx.lineTo(x, y);
-            }
+                for (let t = 0; t <= 1; t += 0.05) {
+                    const x = catmullRom(p0.x, p1.x, p2.x, p3.x, t);
+                    const y = catmullRom(p0.y, p1.y, p2.y, p3.y, t);
+                    if (i === -1 && t === 0) eqCtx.moveTo(x, y);
+                    else eqCtx.lineTo(x, y);
+                }
             }
             eqCtx.stroke();
 
@@ -1275,7 +1307,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 eqCtx.beginPath();
                 eqCtx.arc(p.x, p.y, 6, 0, Math.PI * 2);
                 eqCtx.fill();
-                eqCtx.strokeStyle = '#31343b';
+                eqCtx.strokeStyle = backgroundImage.classList.contains("hidden") ? defaultColor : visualizerColor;
                 eqCtx.stroke();
             });
         }
@@ -1311,6 +1343,39 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 return Math.abs(x - px) < 10;
             });
         }
+
+        function drawWaveform() {
+            requestAnimationFrame(drawWaveform);
+
+            if (waveformCanvas.classList.contains("hidden")) return;
+
+            analyser.getByteTimeDomainData(timeDataArray);
+            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+
+            waveformCtx.lineWidth = 5;
+            waveformCtx.strokeStyle = backgroundImage.classList.contains("hidden") ? defaultColor : visualizerColor;
+            waveformCtx.beginPath();
+
+            const sliceWidth = waveformCanvas.width / timeDataArray.length;
+            let x = 0;
+
+            for (let i = 0; i < timeDataArray.length; i++) {
+                const v = timeDataArray[i] / 128.0;
+                const y = v * waveformCanvas.height / 2;
+
+                if (i === 0) {
+                    waveformCtx.moveTo(x, y);
+                } else {
+                    waveformCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            waveformCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+            waveformCtx.stroke();
+        }
+        drawWaveform();
 
         eqCanvas.addEventListener('mousedown', e => {
             const rect = eqCanvas.getBoundingClientRect();
@@ -1972,6 +2037,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         let isDraggingSpeed = false;
         let isDraggingVolume = false;
         let isDraggingPlayer = false;
+        let isDraggingOscillator = false;
         let isDraggingLibrary = false;
         let isDraggingSettings = false;
         let offsetX, offsetY;
@@ -1989,6 +2055,17 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             player.classList.add('dragging');
             offsetX = e.clientX - player.offsetLeft;
             offsetY = e.clientY - player.offsetTop;
+        });
+
+        oscillator.addEventListener('mousedown', (e) => {
+            lastWindowInteractedWith.style.zIndex = 1;
+            lastWindowInteractedWith = oscillator;
+            oscillator.style.zIndex = 2;
+            if (e.target.classList.contains("ig") || !canDragPlayer) return;
+            isDraggingOscillator = true;
+            oscillator.classList.add('dragging');
+            offsetX = e.clientX - oscillator.offsetLeft;
+            offsetY = e.clientY - oscillator.offsetTop;
         });
 
         libraryUI.addEventListener('mousedown', (e) => {
@@ -2046,11 +2123,25 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
                 if (newLeft < 20) newLeft = 20;
                 if (newTop < 20) newTop = 20;
-                if (newLeft > maxLeft - 30) newLeft = maxLeft - 30;
+                if (newLeft > maxLeft - 20) newLeft = maxLeft - 20;
                 if (newTop > maxTop - 20) newTop = maxTop - 20;
                 
                 player.style.left = `${newLeft}px`;
                 player.style.top = `${newTop}px`;
+            }
+            if (isDraggingOscillator) {
+                let newTop = e.clientY - offsetY;
+                let newLeft = e.clientX - offsetX;
+                const maxLeft = window.innerWidth - oscillator.offsetWidth;
+                const maxTop = window.innerHeight - (oscillator.offsetHeight)//+ (libraryUI.classList.contains('hidden') ? 0 : 10 + libraryUI.offsetHeight));
+
+                if (newLeft < 20) newLeft = 20;
+                if (newTop < 20) newTop = 20;
+                if (newLeft > maxLeft - 20) newLeft = maxLeft - 20;
+                if (newTop > maxTop - 20) newTop = maxTop - 20;
+                
+                oscillator.style.left = `${newLeft}px`;
+                oscillator.style.top = `${newTop}px`;
             }
             if (isDraggingLibrary) {
                 let newTop = e.clientY - LoffsetY;
@@ -2061,7 +2152,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
                 if (newLeft < 20) newLeft = 20;
                 if (newTop < minTop) newTop = minTop;
-                if (newLeft > maxLeft - 30) newLeft = maxLeft - 30;
+                if (newLeft > maxLeft - 20) newLeft = maxLeft - 20;
                 if (newTop > maxTop) newTop = maxTop - 20;
                 
                 libraryUI.style.left = `${newLeft}px`;
@@ -2075,7 +2166,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
                 if (newLeft < 20) newLeft = 20;
                 if (newTop < 20) newTop = 20;
-                if (newLeft > maxLeft - 30) newLeft = maxLeft - 30;
+                if (newLeft > maxLeft - 20) newLeft = maxLeft - 20;
                 if (newTop > maxTop - 20) newTop = maxTop - 20;
                 
                 settingsUI.style.left = `${newLeft}px`;
@@ -2088,11 +2179,13 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             isDraggingSpeed = false;
             isDraggingVolume = false;
             if (isDraggingPlayer) player.classList.remove('dragging');
+            if (isDraggingOscillator) oscillator.classList.remove('dragging');
             if (isDraggingLibrary) libraryUI.classList.remove('dragging');
             if (isDraggingSettings) settingsUI.classList.remove('dragging');
             isDraggingPlayer = false;
             isDraggingLibrary = false;
             isDraggingSettings = false;
+            isDraggingOscillator = false;
         });
 
         function updateSeekFromMouse(e) {
@@ -2158,11 +2251,20 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 }
             });
         }
+        function brightenRGB(rgbString, factor) {
+            const [r, g, b] = rgbString
+                .match(/\d+/g)
+                .map(n => Math.min(255, Math.round(parseInt(n) * factor)));
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
         albumCover.onload = () => {
             if (albumCover.src.includes("data:image/png")) {
                 visualizerColor = defaultColor;
             } else {
                 visualizerColor = getDominantColor(albumCover);
+                brighterVisualizerColor = brightenRGB(visualizerColor, 1.8);
+                drawEq();
             }
         };
         function fileToBase64(file) {
@@ -2189,6 +2291,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         let hsHidden = true;
         let mmHidden = true;
         let pHidden = false;
+        let oHidden = true;
         let lHidden = true;
         let seHidden = true;
         let bHidden = false;
@@ -2199,6 +2302,14 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             lastWindowInteractedWith.style.zIndex = 1
             lastWindowInteractedWith = player;
             player.style.zIndex = 2;
+        }
+        function toggleOscillator(v, f) {
+            if (sHidden && !f) return;
+            oHidden = f ? v : !oHidden;
+            if (sHidden || oHidden) { oscillator.classList.add("hidden"); } else { oscillator.classList.remove("hidden"); }
+            lastWindowInteractedWith.style.zIndex = 1
+            lastWindowInteractedWith = oscillator;
+            oscillator.style.zIndex = 2;
         }
         function toggleLibraryUI(v, f) {
             if (sHidden && !f) return;
@@ -2306,10 +2417,13 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     settingsUITop: settingsUI.style.top, 
                     libraryUILeft: libraryUI.style.left, 
                     libraryUITop: libraryUI.style.top, 
+                    oscillatorLeft: oscillator.style.left, 
+                    oscillatorTop: oscillator.style.top, 
                     backgroundHidden: backgroundImage.classList.contains("hidden"), 
                     playlistHidden: libraryUI.classList.contains('hidden') ? songsList.parentElement.classList.contains("hidden") : songsListOriginallyHidden, 
                     playerCarriedOver: player.parentElement == audioPlayerScreenParent,
                     playerHidden: pHidden, 
+                    oscillatorHidden: oHidden, 
                     libraryUIHidden: lHidden, 
                     settingsUIHidden: seHidden, 
                     botButtonsHidden: bHidden, 
@@ -2365,6 +2479,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     if (settings.playerCarriedOver) audioPlayerScreenParent.appendChild(player);
                     toggleScreen(settings.screenHidden, true);
                     togglePlayer(settings.playerHidden, true);
+                    toggleOscillator(settings.oscillatorHidden, true);
                     toggleSettingsUI(settings.settingsUIHidden, true);
                     toggleLibraryUI(settings.libraryUIHidden, true);
                     toggleBotButtons(settings.botButtonsHidden, true);
@@ -2383,6 +2498,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     libraryUI.style.left = settings.libraryUILeft;
                     settingsUI.style.top = settings.settingsUITop;
                     settingsUI.style.left = settings.settingsUILeft;
+                    oscillator.style.top = settings.oscillatorTop;
+                    oscillator.style.left = settings.oscillatorLeft;
                     if (settings.eq) {
                         for (let draggingPoint = 0; draggingPoint < settings.eq.length; draggingPoint++) {
                             const point = settings.eq[draggingPoint];
@@ -2409,6 +2526,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         }
 
         let songsListOriginallyHidden;
+        let resetHTMLBox = false;
 
         document.addEventListener('keydown', e => {
             const typingElement = e.target;
@@ -2432,9 +2550,9 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     if (e.code === 'KeyM') toggleMenuOption('m');
                     else if (e.code === 'KeyD') {
                         canDragPlayer = !canDragPlayer;
-                        if (canDragPlayer) { player.classList.add("candrag"); libraryUI.classList.add("candrag"); settingsUI.classList.add("candrag"); } else { player.classList.remove("candrag"); libraryUI.classList.remove("candrag"); settingsUI.classList.remove("candrag"); }
+                        if (canDragPlayer) { player.classList.add("candrag"); oscillator.classList.add("candrag"); libraryUI.classList.add("candrag"); settingsUI.classList.add("candrag"); } else { player.classList.remove("candrag"); oscillator.classList.remove("candrag"); libraryUI.classList.remove("candrag"); settingsUI.classList.remove("candrag"); }
                     }
-                    else if (e.code === 'KeyB') backgroundImage.classList.toggle("hidden");
+                    else if (e.code === 'KeyB') { backgroundImage.classList.toggle("hidden"); drawEq(); }
                     else if (e.code === 'KeyH') {
                         toggleScreen();
                     } else if (e.code === 'KeyQ' && libraryUI.classList.contains('hidden')) songsList.parentElement.classList.toggle("hidden");
@@ -2467,6 +2585,36 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     else if (e.key === '/') toggleModal('shortcutsModal');
                 }
             }
+            if (e.shiftKey && (e.ctrlKey || e.metaKey) && !hsHidden && e.code == "KeyR" && !resetHTMLBox) {
+                e.preventDefault();
+                resetHTMLBox = true;
+                const div = document.getElementById("htmltextbox");
+                htmlEditor = document.createElement("textarea");
+                htmlEditor.value = div.textContent;
+                htmlEditor.id = div.id;
+                htmlEditor.className = div.className;
+                htmlEditor.style.cssText = div.style.cssText;
+                htmlEditor.placeholder = "Enter HTML code here..."
+                htmlEditor.value = `<!DOCTYPE html>
+                <html>
+                <head>
+                <style>
+                    body { background: #111; color: #0f0; font-family: monospace; }
+                </style>
+                </head>
+                <body>
+                <h1>HTML Test</h1>
+                <script>
+                    console.log("JS is working!");
+                <\/script>
+                </body>
+                </html>`;
+                vsLoaded = false;
+                div.replaceWith(htmlEditor);
+                htmlEditor.addEventListener('input', updatePreview);
+                updatePreview();
+                return;
+            }
             if (e.shiftKey && (e.ctrlKey || e.metaKey) && sHidden && e.code == "KeyH") {
                 toggleScreen();
                 return;
@@ -2480,6 +2628,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     else if (e.code === 'KeyB') backgroundVis = !backgroundVis;
                     else if (e.code === 'KeyE') toggleSS();
                     else if (e.code === 'KeyI') toggleModal('importModal');
+                    else if (e.code === 'KeyO') toggleOscillator();
                 }
                 return;
             }
@@ -2687,11 +2836,10 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 const req = tx.objectStore("session").get(1);
 
                 return new Promise((resolve) => {
-                    tx.oncomplete = async () => {
+                    tx.oncomplete = () => {
                         resolve(req.result || { settings: {}, playlists: [] });
                         imp(req.result);
                         impSesLabel.parentElement.classList.remove('show');
-                        await saveSessionDB(true);
                         isLoadingSession = false;
                     };
                 });
