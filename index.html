@@ -20,7 +20,6 @@
             body {
                 font: "Inter", sans-serif;
                 margin: 0;
-                background-color: #0e1116;
                 color: white;
                 display: flex;
                 flex-direction: column;
@@ -29,6 +28,7 @@
                 height: 100vh;
                 user-select: none;
                 overflow: hidden;
+                z-index: -2;
             }
             .player {
                 width: 90%;
@@ -623,7 +623,8 @@
                 </div>
             </div>
         </div>
-        <div id="htmlsandbox" class="screen" style="display: none;">
+        <div class="background-blur" id="background-blur" style="z-index: -1;"></div>
+        <div id="htmlsandbox" class="screen" style="display: none; background: none;">
             <div style="position:absolute; left: 30px; top:30px;">
                 <div style="display: flex; flex-direction: row; gap:5px;">
                     <div class="mainmenubutton">
@@ -791,7 +792,7 @@
                     <section class="modal-card-body">
                         <div style="margin-bottom: 15px; margin-top: -10px;">Are you sure you'd like to reset this session?</div>
                         <div class="modal-content-area" style="align-items: center; justify-content: center; display:flex;">
-                            <button class="button is-light" onclick="reset(true); closeModal('resetModal');">Yes</button>
+                            <button class="button is-light" onclick="resetS(true); closeModal('resetModal');">Yes</button>
                             <div class="divider">or</div>
                             <button class="button" onclick="closeModal('resetModal');">No</button>
                         </div>
@@ -874,7 +875,6 @@
                 </div>
             </div>
 
-            <div class="background-blur" id="background-blur"></div>
             <div style="position:absolute; bottom:15px;">
                 <div id="botbuttons" style="display: flex; flex-direction: row; gap:5px;">
                     <div class="mainmenubutton">
@@ -1285,7 +1285,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             });
 
             eqCtx.lineWidth = 3;
-            eqCtx.strokeStyle = backgroundImage.classList.contains("hidden") ? defaultColor : visualizerColor;
+            eqCtx.strokeStyle = backgroundImage.classList.contains("hidden") || backgroundImage.style.backgroundImage == 'url("' + defaultBgImg + '")' ? defaultColor : visualizerColor;
             eqCtx.beginPath();
             for (let i = -1; i < pts.length - 2; i++) {
                 const p0 = pts[i] || pts[0];
@@ -1483,6 +1483,18 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             }
         }
 
+        function arrayBufferToBase64(array) {
+            let binary = '';
+            const bytes = new Uint8Array(array);
+            const len = bytes.length;
+            
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+
+            return window.btoa(binary);
+        }
+
         let posX = 50;
         let posY = 50;
         let zoom = 1;
@@ -1509,7 +1521,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             scaleVelocity *= damping;
             scaleCurrent += scaleVelocity;
 
-            let brightness = 0.4 + (mid / 255) * 0.3;
+            let brightness = !backgroundVis ? 0.57 : 0.4 + (mid / 255) * 0.3;
 
             backgroundImage.style.filter = `blur(20px) brightness(${brightness})`;
             backgroundImage.style.transform = `scale(${scaleCurrent})`;
@@ -1591,7 +1603,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             return playlist;
         }
 
-        function reset(f) {
+        function resetS(f) {
             for (let i = 0; i < playlists.length; i++) {
                 const playlist = playlists[i];
                 if (playlist.id != "0") { playlist.div.remove(); }
@@ -1614,6 +1626,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             bHidden = false;
             sHidden = false;
             seHidden = true;
+            oHidden = true;
+            oscillator.classList.add("hidden");
             settingsUI.classList.add("hidden");
             libraryUI.classList.add("hidden");
             player.classList.remove("hidden");
@@ -1697,6 +1711,17 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             });
         }
 
+        function addSong(song) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["songs"], "readwrite");
+                const store = transaction.objectStore("songs");
+                const request = store.put(song);
+
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
         function removeSong(id, playlistItem, playlistId) {
             const songInAllSongs = allSongs.findIndex(a => a.id == id);
             if (songInAllSongs !== -1) {
@@ -1725,15 +1750,23 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 if (pIndex <= currentIndex) {
                     currentIndex--;
                 }
+                if (songCache.has(id)) {
+                    songCache.delete(id);
+                }
                 if (pIndex == savedIndex) {
                     nextSong();
                 }
+                try {
+                    const transaction = db.transaction(["songs"], "readwrite");
+                    const store = transaction.objectStore("songs");
+                    store.delete(id);
+                } catch { };
                 if (playlistId == currentVisiblePlaylist) playlistSubinfoText.textContent = playlist.songs.length + " songs";
                 updatePlaylistUI();
             }
         }
 
-        async function createSongDiv(title, picture, artist, file, ts, pi, playlistAddingTo, usedId, playIfFirst) {
+        async function createSongDiv(title, picture, artist, ts, pi, playlistAddingTo, usedId, playIfFirst) {
             if (!playlistAddingTo) playlistAddingTo = currentPlaylist;
             let id;
             if (usedId) { id = usedId; } else { id = lastUsedId.toString(); lastUsedId++; }
@@ -1754,34 +1787,39 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 const div = document.createElement('div');
                 div.className = 'song';
                 div.classList.toggle("hidden", currentVisiblePlaylist != playlistAddingTo)
-                let pic = defaultCover;
-                if (picture) {
+                let pic = (typeof picture == "string" && picture.startsWith("data:image")) ? picture : defaultCover;
+                let picDataURI = picture;
+                if (picture && !(typeof picture == "string" && picture.startsWith("data:image"))) {
                     const blob = new Blob([new Uint8Array(picture.data)], { type: picture.format });
                     const imageUrl = URL.createObjectURL(blob);
                     pic = imageUrl;
+                    const base64String = arrayBufferToBase64(picture.data);
+                    picDataURI = `data:${picture.format};base64,${base64String}`;
                 }
                 div.dataset.id = id;
                 let inner = `<img class="songcover" src="${pic}"/><div><div class="songt t ig">${title}</div><div class="subtitle songst t ig">${artist}</div></div><button aria-label="Remove Song" style="margin-right:10px;">X</button>`;
                 div.innerHTML = inner;
-                div.onclick = () => playSelectedSong(file);
-                const songItem = {
-                    id: id, 
-                    title: title,
-                    cover: pic,
-                    rawimg: (picture ? JSON.stringify(picture) : null),
-                    artist: artist,
-                    file: file,
-                    div: div,
-                    playlists: [playlistAddingTo]
-                }
-                div.dataset.playlists = JSON.stringify(songItem.playlists);
+                div.onclick = () => playSelectedSong(id);
+                div.dataset.playlists = JSON.stringify([playlistAddingTo]);
                 const playlist = getPlaylist(null, null, playlistAddingTo);
                 const psPlaylist = getPSPlaylist(null, playlistAddingTo);
-                const playlistItem = pi || await buildPlaylistItem(songItem);
+                const playlistItem = pi || {
+                    title: title,
+                    artist: artist,
+                    cover: picDataURI,
+                    id: id 
+                }
                 div.style.order = playlist.songs.length;
                 psPlaylist.songs.push(id);
                 playlist.songs.push(id);
-                allSongs.push(songItem);
+                allSongs.push({
+                    id: id, 
+                    title: title,
+                    cover: pic,
+                    artist: artist,
+                    div: div,
+                    playlists: [playlistAddingTo]
+                });
                 songsSavingData.allSongs.push(playlistItem);
                 playlistSubinfoText.textContent = playlist.songs.length + " songs";
                 const btn = div.querySelector('button');
@@ -1790,8 +1828,28 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     removeSong(id, playlistItem, currentVisiblePlaylist);
                 });
                 songsList.appendChild(div);
-                if (!audio.src && playIfFirst) {
-                    loadSong(0);
+                if (playIfFirst) {
+                    addSong({
+                        title: title,
+                        artist: artist,
+                        cover: picDataURI,
+                        audioData: playIfFirst,
+                        id: id 
+                    });
+                    if (!audio.src) {
+                       // try {
+                            const index = playlist.songs.indexOf(id);
+                            currentIndex = index;
+                            currentSongId = id;
+                            audio.src = URL.createObjectURL(playIfFirst);
+                            audio.currentTime = 0;
+                            updatePlaylistUI();
+                            updateSpeed();
+                            togglePlay();
+                        /*} catch(e) {
+                            errorMsg("Couldn't load song: " + e);
+                        } */
+                    }
                 }
                 return div;
             }
@@ -1872,11 +1930,11 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             for (const file of files) {
                 jsmediatags.read(file, {
                     onSuccess: async function(tag) {
-                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", file, null, null, atp, null, true);
+                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", null, null, atp, null, file);
                     },
                     onError: function(error) {
                         displayMsg("Error reading song metadata: " + error, 'error');
-                        createSongDiv(file.name, null, "Unknown artist", file, null, null, atp, null, true);
+                        createSongDiv(file.name, null, "Unknown artist", null, null, atp, null, file);
                     }
                 });
             }
@@ -1912,27 +1970,61 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             sessionInput.value = "";
         });
 
-        function loadSong(index, ts) {
+        let MAX_CACHE_SIZE = 10; 
+        let songCache = new Map();
+
+        async function getSong(songId) {
+            if (!songId) return;
+            if (songCache.has(songId)) {
+                const song = songCache.get(songId);
+                songCache.delete(songId);
+                songCache.set(songId, song);
+                return song;
+            }
+            const transaction = db.transaction(["songs"], "readonly");
+            const store = transaction.objectStore("songs");
+            const request = store.get(songId);
+            const song = await new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject("Song not found in IndexedDB");
+            });
+            if (!song) {
+                return errorMsg(`Song with ID '${songId}' not found`);
+            }
+            if (songCache.size >= MAX_CACHE_SIZE) {
+                const oldestKey = songCache.keys().next().value;
+                songCache.delete(oldestKey);
+            }
+            songCache.set(songId, song);
+            return song;
+        }
+
+        async function loadSong(index, ts) {
             let playlist = getPlaylist(null, null, currentPlaylist);
             try {
                 currentIndex = index;
                 currentSongId = playlist.songs[index];
-                const file = allSongs.find(s => s.id == playlist.songs[index]).file; 
-                const url = typeof file == "string" ? file : URL.createObjectURL(file);
+                const file = await getSong(playlist.songs[index]);
+                if (audio.src?.startsWith("blob:")) {
+                    URL.revokeObjectURL(audio.src);
+                }
+                const url = typeof file == "string" ? file : URL.createObjectURL(file.audioData);
                 let gtp = !audio.src;
                 audio.src = url;
+                audio.load();
                 audio.currentTime = ts || 0;
                 updatePlaylistUI();
                 updateSpeed();
                 if (gtp && !ts) togglePlay();
-            } catch(e) {
+            } catch (e) {
+                console.log(e);
                 try {
                     if (playlist.songs.length == 0) {
                         currentIndex = 0;
                         currentSongId = "0";
                         audio.removeAttribute('src');
                         audio.load(); 
-                        backgroundImage.style.backgroundImage = "";
+                        backgroundImage.style.backgroundImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAGAAYDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD896KKK7TnP//Z";
                         albumCover.src = defaultCover;
                         titleText.textContent = "No song playing"
                         artistText.textContent = "Import a song!"
@@ -1942,21 +2034,24 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                         playIcon.alt = "Play";
                         playIcon.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAsdQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////hq6ANQAAAO10Uk5TACRZjL3O2+j1//DEsp2GYCwydbfx98ORXRlcqey4CJTuPwFf0NVXDHTjevJbQtzUO7CsH0TthAqA/eUSvMs0/qEWK+rzeQfeUvnAOPyWM28EJ0bXsyK0iw196WQ8z9ioHPb44rEv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';
                     }
-                } catch(e) { }
+                } catch(e) {
+                    console.log(e);
+                }
             }
         }
 
         animateBackground();
         draw();
 
-        function playSelectedSong(file) {
+        async function playSelectedSong(id) {
             let playlist = getPlaylist(null, null, currentVisiblePlaylist);
-            const index = playlist.songs.findIndex(id => allSongs.find(s => s.id == id).file == file);
+            const index = playlist.songs.findIndex(i => i == id);
             if (index !== -1) {
                 currentPlaylist = currentVisiblePlaylist;
-                loadSong(index);
-                audio.play();
-                playIcon.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAnNQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////elH21QAAANF0Uk5TACdVg7DFztfg6fL/8+rh2M/HtYlbLC3QDz9tm8n1+KByRBQZR3Wj0fpsPhhZnN6oZSBYUZPWFVAddM1+JoXdc2nC/mgFY9znC3vsYghr4npq8IESgjpMMhOfs/2UAXcEB3gXucwjPOhcA/x9w9Qr4/RB73CLj/uaqnyITkL35TYawd8QvpC0S08oChbKNzUeyENgDesJ5vbagNvAIUBIIgw4MO0C8Zi4JJlFoaXVKr3TXUk00sscRlpv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Ue30X4OgDyD3vWTP5xUP7l/6Xz3oGv11gfoAcv8lqZxS+9+Tal5r+Dw8bN+inaAPYHQW3wwnuKT2G8QGbbZ7Gi5U72876QPIfS+pORac+1FO3fvbTvoADlJPcHZW7ecqVlncWeTqLe0AApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACL0f009wtdRv6z5oYM22z0NFz2f107QBzB5pXqEr1O+X/NDm9caPg8PY2/UTtAHcMg29QhXql+S3N/fGv+gnaAP4PA31SNcjbxf8eDc39/mf1U7QR/AtbPVI1yp9pK5v79dO0k7QR/A3eeqR7hS7SVzf3+75UztBH0Ag59Wj3Cl2kvm/v42cKN2gj6A+QvUI1xt1fwSNx5g9jxczFK//+oDGL5OPcLVBZpAc6976I+0E/QB3DpdPcLVQs3zy73uJepDlfoAcj9a9u3xigfnXrfiKOe79AFURj+sn+HokssVD868btUxjg4GAeR9IEB5sDTvuvXHgSwCuGeifoaflltVD++2v9HzcLH8DPUIgwCWXKqf4WfRZNXDb5xh9DxcqBa4HQwCGLJJP8OPcp2c9yrw2A3qEQYBVLrvZzDESc9Tb1M9vnnIIpsn4mH7Fv0MiwCOfNVgiBP12ZKb9essN72e08+wCCDnRYByCZD3IsBgCWASQM6LAPWhspwXAQZLAJMAKiMftZjiYdLTtV8P1qF5YO3XlDrTXw5UMQog392kwbtkvisc9dtbO5MAVty53mKMA/3JknzfA5rOsrgUxySAbJfKDaPuVM8Y988NBs/Egf5ysHY2AeR61lR/vUQl32sC9NcCtLMJoPXWF0zmWFv2ZYMhd0w1GGKv3wd+YjHGJoBML506+GWTMXleGKi61G0XowDyXClZHCip5Hqgy2B9284ogCyXgYsfvd1kzvimi0zmmLJZAtoFkOMuwGaVtMPMG4wGGTLaAZgFkOF1Qa3VaUaTri+y2wVY7QDsAmj6hdUkK1OuMRuV3y5gqdVlWGYBjHtGfZOKLbsdQIa7gHfO0B/h6mAWQGX1BLNRJsxWAO1yO9K14AKrSXYBZHaT4NxnlhlOm3pcVksc/S2B7zEMYPHinG6mn2d7hvKab5iO0+l5hN0OyTCArM4KG/6OdMhp/2ZyHvhdlgGcfd92w2kq1Y9Yv2kvnm35UqkM73Gb3TDTf9VHn7KcpjFmhfnICavNR9bouJ8ZDrPN+t6zTcfVbPCBa8xnjjhtjvnMmtz+JctptgFcNcDi/Kta24ILHaYO+XgWXxi0bd7XLccZv7Hdd8HrtgNrMWrDr1zmXvjbB1zmdkmPr1xsOs96ZZPDqVPLRfIecviYY3SK+z3mS9v0F9HO7j/WafLKzQudJke7+SzjgeYBNJ/j9fJHGvZJzTdCyFp/mPgOiJWjrSfaf7hd2u/vzWd2wczfeN7IMamP3SnGGvzTC+dbj3Q4unFFW8IXqXrQK67zD3sr4fGgYZ+4wnymxz/nsBN/7DA1yozqN523cFmR7H7xk/s67Nxcep7TluhFGnXUfPdtzN6c6MNg9aK5DlN9dmirH0tzR+WflfER5EHrhXicHuNddm5O72hzrkpwP1WP6z9fynbGHJEg74a7Pucy12tJs+p/PY7Girxeor3NeUP9hzq6atiRTtG5rWlbT9B/hVmXnPt2eb+XHzS93izC6rkm94F1wu9DzbyBpf4hgYNX/G2JWxt64vISt1ZpOc70BNDuHD/VTj10XXlfG9D3WO1XgXRN86YXS9vW+I0fsby+cU+uhzX+7YGSTqAWY8u/cH/Kymo5Gxpbvclxuu9xrYkH2l+Z09lmtqT41DmpeylvAy1V1814H9j8gv2lOXuZ9Xi5u/8/aT7L6v4swYgHfee7H9m+r3A+Ozi4772+GxCc3uJ8BdTK6hd9N+AfQKXy0OJH/Ibf1OuVlKefx/+w9Ty/6Sc94X9ks4xzWw/fUXU6fN50+JPqP5mhNKjR64aBaZ+qjnQavZtyTm6uKVwO0k744qkeY7to7XdcVrrn3+p7YvtdZZ3dLtYst94LtOzn+fGoK87bvsp44qh+V5b0IbO8yxuK1WttvrGlw7+8UdaR/xjfe8AygfFn/E1JP/4yA6hUVgy47AmbSa2/axphM8nMHT8/2ug7BD5WnVjinfYlX+C06Df6l+mhlgnHJ77wtFMrt25qPk07pPV33WdaPJlo5V/hdt1/3ttY+6N/MPXz/hf91G72d5d9uvZHbzv9RLMvfoiV5BLHQQtWvVXD+dSGY4oTs/3u9vesuK66qYarYYZvXDIrxUfaZNe4Xtla/e7G6LeDK/s+Nrr4a8/nY+rx6v2feDH6Fq7WQ4++7WjbG77ipb3pfX3LPcXqId2eeH5Gp3/7otevP/3mS09/pij+p8xz/Vb+9YjqvQcN7H3wD07o9HjekEX9P/bOhjGvP9TSVPYz210233qANAigzhFAnSOAOkcAdY4A6hwB1DkCqHMEUOcIoM4RQJ0jgDpHAHWOAOocAdQ5AqhzBFDnCKDO/T/6Buhb5yf4RQAAAABJRU5ErkJggg==';
+                loadSong(index).then(() => {
+                    audio.play();
+                    playIcon.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAnNQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////elH21QAAANF0Uk5TACdVg7DFztfg6fL/8+rh2M/HtYlbLC3QDz9tm8n1+KByRBQZR3Wj0fpsPhhZnN6oZSBYUZPWFVAddM1+JoXdc2nC/mgFY9znC3vsYghr4npq8IESgjpMMhOfs/2UAXcEB3gXucwjPOhcA/x9w9Qr4/RB73CLj/uaqnyITkL35TYawd8QvpC0S08oChbKNzUeyENgDesJ5vbagNvAIUBIIgw4MO0C8Zi4JJlFoaXVKr3TXUk00sscRlpv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Ue30X4OgDyD3vWTP5xUP7l/6Xz3oGv11gfoAcv8lqZxS+9+Tal5r+Dw8bN+inaAPYHQW3wwnuKT2G8QGbbZ7Gi5U72876QPIfS+pORac+1FO3fvbTvoADlJPcHZW7ecqVlncWeTqLe0AApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACIQQEoEEEYAEgKQEEAEAkiJAMIIQEIAEgKIQAApEUAYAUgIQEIAEQggJQIIIwAJAUgIIAIBpEQAYQQgIQAJAUQggJQIIIwAJAQgIYAIBJASAYQRgIQAJAQQgQBSIoAwApAQgIQAIhBASgQQRgASApAQQAQCSIkAwghAQgASAohAACkRQBgBSAhAQgARCCAlAggjAAkBSAggAgGkRABhBCAhAAkBRCCAlAggjAAkBCAhgAgEkBIBhBGAhAAkBBCBAFIigDACkBCAhAAiEEBKBBBGABICkBBABAJIiQDCCEBCABICiEAAKRFAGAFICEBCABEIICUCCCMACQFICCACAaREAGEEICEACQFEIICUCCCMACQEICGACASQEgGEEYCEACQEEIEAUiKAMAKQEICEACL0f009wtdRv6z5oYM22z0NFz2f107QBzB5pXqEr1O+X/NDm9caPg8PY2/UTtAHcMg29QhXql+S3N/fGv+gnaAP4PA31SNcjbxf8eDc39/mf1U7QR/AtbPVI1yp9pK5v79dO0k7QR/A3eeqR7hS7SVzf3+75UztBH0Ag59Wj3Cl2kvm/v42cKN2gj6A+QvUI1xt1fwSNx5g9jxczFK//+oDGL5OPcLVBZpAc6976I+0E/QB3DpdPcLVQs3zy73uJepDlfoAcj9a9u3xigfnXrfiKOe79AFURj+sn+HokssVD868btUxjg4GAeR9IEB5sDTvuvXHgSwCuGeifoaflltVD++2v9HzcLH8DPUIgwCWXKqf4WfRZNXDb5xh9DxcqBa4HQwCGLJJP8OPcp2c9yrw2A3qEQYBVLrvZzDESc9Tb1M9vnnIIpsn4mH7Fv0MiwCOfNVgiBP12ZKb9essN72e08+wCCDnRYByCZD3IsBgCWASQM6LAPWhspwXAQZLAJMAKiMftZjiYdLTtV8P1qF5YO3XlDrTXw5UMQog392kwbtkvisc9dtbO5MAVty53mKMA/3JknzfA5rOsrgUxySAbJfKDaPuVM8Y988NBs/Egf5ysHY2AeR61lR/vUQl32sC9NcCtLMJoPXWF0zmWFv2ZYMhd0w1GGKv3wd+YjHGJoBML506+GWTMXleGKi61G0XowDyXClZHCip5Hqgy2B9284ogCyXgYsfvd1kzvimi0zmmLJZAtoFkOMuwGaVtMPMG4wGGTLaAZgFkOF1Qa3VaUaTri+y2wVY7QDsAmj6hdUkK1OuMRuV3y5gqdVlWGYBjHtGfZOKLbsdQIa7gHfO0B/h6mAWQGX1BLNRJsxWAO1yO9K14AKrSXYBZHaT4NxnlhlOm3pcVksc/S2B7zEMYPHinG6mn2d7hvKab5iO0+l5hN0OyTCArM4KG/6OdMhp/2ZyHvhdlgGcfd92w2kq1Y9Yv2kvnm35UqkM73Gb3TDTf9VHn7KcpjFmhfnICavNR9bouJ8ZDrPN+t6zTcfVbPCBa8xnjjhtjvnMmtz+JctptgFcNcDi/Kta24ILHaYO+XgWXxi0bd7XLccZv7Hdd8HrtgNrMWrDr1zmXvjbB1zmdkmPr1xsOs96ZZPDqVPLRfIecviYY3SK+z3mS9v0F9HO7j/WafLKzQudJke7+SzjgeYBNJ/j9fJHGvZJzTdCyFp/mPgOiJWjrSfaf7hd2u/vzWd2wczfeN7IMamP3SnGGvzTC+dbj3Q4unFFW8IXqXrQK67zD3sr4fGgYZ+4wnymxz/nsBN/7DA1yozqN523cFmR7H7xk/s67Nxcep7TluhFGnXUfPdtzN6c6MNg9aK5DlN9dmirH0tzR+WflfER5EHrhXicHuNddm5O72hzrkpwP1WP6z9fynbGHJEg74a7Pucy12tJs+p/PY7Girxeor3NeUP9hzq6atiRTtG5rWlbT9B/hVmXnPt2eb+XHzS93izC6rkm94F1wu9DzbyBpf4hgYNX/G2JWxt64vISt1ZpOc70BNDuHD/VTj10XXlfG9D3WO1XgXRN86YXS9vW+I0fsby+cU+uhzX+7YGSTqAWY8u/cH/Kymo5Gxpbvclxuu9xrYkH2l+Z09lmtqT41DmpeylvAy1V1814H9j8gv2lOXuZ9Xi5u/8/aT7L6v4swYgHfee7H9m+r3A+Ozi4772+GxCc3uJ8BdTK6hd9N+AfQKXy0OJH/Ibf1OuVlKefx/+w9Ty/6Sc94X9ks4xzWw/fUXU6fN50+JPqP5mhNKjR64aBaZ+qjnQavZtyTm6uKVwO0k744qkeY7to7XdcVrrn3+p7YvtdZZ3dLtYst94LtOzn+fGoK87bvsp44qh+V5b0IbO8yxuK1WttvrGlw7+8UdaR/xjfe8AygfFn/E1JP/4yA6hUVgy47AmbSa2/axphM8nMHT8/2ug7BD5WnVjinfYlX+C06Df6l+mhlgnHJ77wtFMrt25qPk07pPV33WdaPJlo5V/hdt1/3ttY+6N/MPXz/hf91G72d5d9uvZHbzv9RLMvfoiV5BLHQQtWvVXD+dSGY4oTs/3u9vesuK66qYarYYZvXDIrxUfaZNe4Xtla/e7G6LeDK/s+Nrr4a8/nY+rx6v2feDH6Fq7WQ4++7WjbG77ipb3pfX3LPcXqId2eeH5Gp3/7otevP/3mS09/pij+p8xz/Vb+9YjqvQcN7H3wD07o9HjekEX9P/bOhjGvP9TSVPYz210233qANAigzhFAnSOAOkcAdY4A6hwB1DkCqHMEUOcIoM4RQJ0jgDpHAHWOAOocAdQ5AqhzBFDnCKDO/T/6Buhb5yf4RQAAAABJRU5ErkJggg==';
+                });
             }
         }
 
@@ -1973,19 +2068,20 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             }
         }
 
-        function nextSong() {
+        async function nextSong() {
             let playlist = getPlaylist(null, null, currentPlaylist);
             if (!(currentIndex < playlist.songs.length - 1)) {
                 currentIndex = -1;
             }
             if (isShuffling) currentIndex = Math.floor(Math.random() * playlist.songs.length);
             currentSongId = playlist.songs[currentIndex];
-            loadSong(++currentIndex);
-            if (audio.paused) togglePlay();
-            audio.play();
+            loadSong(++currentIndex).then(() => {
+                if (audio.paused) togglePlay();
+                audio.play();
+            });
         }
 
-        function prevSong() {
+        async function prevSong() {
             let playlist = getPlaylist(null, null, currentPlaylist);
             if (audio.currentTime > 3) {
                 audio.currentTime = 0;
@@ -1994,9 +2090,10 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     currentIndex = playlist.songs.length;
                 }
                 currentSongId = playlist.songs[currentIndex]
-                loadSong(--currentIndex);
-                if (audio.paused) togglePlay();
-                audio.play();
+                loadSong(--currentIndex).then(() => {
+                    if (audio.paused) togglePlay();
+                    audio.play();
+                });
             }
         }
 
@@ -2020,7 +2117,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         });
 
         audio.addEventListener('ended', () => {
-        if (!audio.loop) nextSong();
+            if (!audio.loop) nextSong();
         });
 
         audio.addEventListener('timeupdate', () => {
@@ -2208,6 +2305,16 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             volumeControl.value = Math.round(percent * 100);
         }
 
+        function updateSpeedFromKeyboard(delta) {
+            const currentPercent = (speedControl.value / 100);
+            let currentSpeed = 0.5 + currentPercent * (1.5 - 0.5);
+            currentSpeed += delta;
+            currentSpeed = Math.min(Math.max(currentSpeed, 0.5), 1.5);
+            speedControl.value = ((currentSpeed - 0.5) / (1.5 - 0.5)) * 100;
+            updateSpeed(currentSpeed);
+        }
+
+
         function updateSpeedFromMouse(e) {
             const rect = speedControl.getBoundingClientRect();
             const percent = (e.clientX - rect.left) / rect.width;
@@ -2218,7 +2325,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
         function updateSpeed(s) {
             if (!s) s = (speedControl.value / 100) + 0.5;
-            audio.playbackRate = s;
+            audio.playbackRate = parseFloat(s.toFixed(2));
             speedDisplay.textContent = "Speed: " + s.toFixed(2) + "×";
         }
 
@@ -2229,6 +2336,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             return `${mins}:${secs}`;
         }
 
+        const defaultBgImg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAC9AMcDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD896KKK7TIKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==";
         function updatePlaylistUI() {
             Array.from(songsList.children).forEach((el) => {
                 let playlist = getPlaylist(null, null, currentPlaylist);
@@ -2244,7 +2352,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 }
                 if (songPlaylist) {
                     albumCover.src = songPlaylist.cover;
-                    backgroundImage.style.backgroundImage = songPlaylist.cover ? (songPlaylist.cover == defaultCover ? "" : `url(${songPlaylist.cover})`) : "";
+                    const bgImg = songPlaylist.cover ? (songPlaylist.cover == defaultCover ? defaultBgImg : songPlaylist.cover) : defaultBgImg;
+                    backgroundImage.style.backgroundImage = `url(${bgImg})`;
                     titleText.textContent = songPlaylist.title;
                     runMarqueeIfOverflowing();
                     artistText.textContent = songPlaylist.artist;
@@ -2264,8 +2373,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             } else {
                 visualizerColor = getDominantColor(albumCover);
                 brighterVisualizerColor = brightenRGB(visualizerColor, 1.8);
-                drawEq();
             }
+            drawEq();
         };
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
@@ -2346,10 +2455,27 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         }
         function toggleScreen(v, f) {
             sHidden = f ? v : !sHidden;
-            if (sHidden) { player.classList.add("hidden"); } else { togglePlayer(pHidden, true); } 
-            if (sHidden) { htmlSandboxScreen.style.display = "none"; } else { toggleMenuOption("h", hsHidden, true); }
-            if (sHidden) { audioPlayerScreen.style.display = "none"; } else { toggleMenuOption("p", apHidden, true); }
-            if (sHidden) { mainMenu.style.display = "none"; } else { toggleMenuOption("m", mmHidden, true); }
+            if (sHidden) {
+                document.body.style.backgroundColor = "white";
+                player.classList.add("hidden"); 
+                htmlSandboxScreen.style.display = "none";
+                audioPlayerScreen.style.display = "none"; 
+                mainMenu.style.display = "none";
+                infoLabel.classList.add('hidden');
+                errorLabel.classList.add('hidden');
+                impSesLabel.classList.add('hidden');
+                saveSesLabel.classList.add('hidden');
+            } else {
+                document.body.style.backgroundColor = "";
+                togglePlayer(pHidden, true);
+                toggleMenuOption("h", hsHidden, true);
+                toggleMenuOption("p", apHidden, true);
+                toggleMenuOption("m", mmHidden, true);
+                infoLabel.classList.remove('hidden');
+                errorLabel.classList.remove('hidden');
+                impSesLabel.classList.remove('hidden');
+                saveSesLabel.classList.remove('hidden');
+            } 
         }
         let wasInMainMenu = false;
         function toggleMenuOption(s, v, f) {
@@ -2397,14 +2523,6 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         audioPlayerOption.addEventListener('click', () => toggleMenuOption('p'));
         htmlSandboxOption.addEventListener('click', () => toggleMenuOption('h'));
         async function exportSession(rawAudioData) {
-            const library = rawAudioData ? JSON.parse(JSON.stringify(songsSavingData)) : songsSavingData;
-            if (rawAudioData) {
-                for (let i = 0; i < library.allSongs.length; i++) {
-                    const song = library.allSongs[i];
-                    const audioData = songsSavingData.allSongs[i].audioData;
-                    song.audioData = typeof audioData == 'string' ? audioData : await fileToBase64(songsSavingData.allSongs[i].audioData);
-                }
-            }
             const sData = {
                 settings: {
                     lastUsedId: lastUsedId, 
@@ -2441,30 +2559,28 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     ci: currentIndex,
                     eq: points
                 }, 
-                library: library
+                library: songsSavingData,
             };
             return sData;
         }
         function imp(session) {
             if (!session) session = {};
-            reset();
+            resetS();
             try {
                 const library = session.library || {allSongs: [], playlists: []};
+                console.log(library);
                 const settings = session.settings || {notLoaded: true};
                 currentPlaylist = settings.currentPlaylist || "0";
                 currentVisiblePlaylist = currentVisiblePlaylist || "0";
                 lastVisiblePlaylist = settings.lastVisiblePlaylist || "";
                 lastUsedId = settings.lastUsedId || 0;
                 for (let i = 0; i < library.playlists.length; i++) {
+                    console.log(library.playlists[i])
                     let importedPlaylist = library.playlists[i];
                     if (importedPlaylist.id != "0") nPlaylist(importedPlaylist.name, importedPlaylist.cover, false, importedPlaylist.id);
                     for (let j = 0; j < importedPlaylist.songs.length; j++) {
                         let v = library.allSongs.find(s => s.id == importedPlaylist.songs[j]);
-                        let picture = v.cover;
-                        if (picture) {
-                            picture = JSON.parse(picture);
-                        }
-                        createSongDiv(v.title, picture, v.artist, v.audioData, settings.timestamp, v, importedPlaylist.id, v.id);
+                        createSongDiv(v.title, v.cover, v.artist, settings.timestamp, v, importedPlaylist.id, v.id);
                     }
                 }
                 if (!audio.src) {
@@ -2512,6 +2628,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     }
                 }
             } catch(e) {
+                console.log(e);
                 errorMsg(e);
             }
         }
@@ -2632,9 +2749,11 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 }
                 return;
             }
-            if (e.shiftKey && !sHidden) {
+            if (e.shiftKey) {
                 e.preventDefault();
-                if (e.code === 'KeyS') toggleSettingsUI();
+                if (!sHidden && e.code === 'KeyS') toggleSettingsUI();
+                else if (e.code === 'ArrowUp') updateSpeedFromKeyboard(0.02);
+                else if (e.code === 'ArrowDown') updateSpeedFromKeyboard(-0.02);
                 return;
             }
         });
@@ -2711,7 +2830,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             isLoadingSession = false;
         }
         const DB_NAME = "mp3_player";
-        const DB_VERSION = 1;
+        const DB_VERSION = 2;
         let db;
 
         function openDB() {
@@ -2722,6 +2841,11 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     db = e.target.result;
                     if (!db.objectStoreNames.contains("session")) {
                         db.createObjectStore("session", { keyPath: "id" });
+                    }
+                    if (!db.objectStoreNames.contains("songs")) {
+                        const store = db.createObjectStore("songs", { keyPath: "id" });
+                        store.createIndex("title", "title", { unique: false });
+                        store.createIndex("artist", "artist", { unique: false });
                     }
                 };
 
@@ -2780,11 +2904,11 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                             .then(blob => { 
                                 jsmediatags.read(blob, {
                                     onSuccess: function(tag) {
-                                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", blob, null, null, atp, null, true);
+                                        createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", null, null, atp, null, blob);
                                     },
                                     onError: function(error) {
                                         displayMsg("Error reading song metadata: " + error, 'error');
-                                        createSongDiv(file.name, null, "Unknown artist", blob);
+                                        createSongDiv(file.name, null, "Unknown artist", null, null, atp, null, blob);
                                     }
                                 });
                             })
@@ -2800,7 +2924,6 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             isSavingSession = true;
             saveSesLabel.parentElement.classList.add('show');
             if (!dbx) {
-                await openDB();
                 const tx = db.transaction(["session"], "readwrite");
                 const data = await exportSession()
                 tx.objectStore("session").put({id: 1, ...data});
@@ -2962,6 +3085,20 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 altKey: e.altKey,
                 metaKey: e.metaKey
                 }, '*');
+            });
+            window.addEventListener('message', (e) => {
+            console.log(e);
+            if (e.data.type === 'keydown') {
+                window.parent.postMessage({
+                type: 'keydown',
+                key: e.data.key,
+                code: e.data.code,
+                shiftKey: e.data.shiftKey,
+                ctrlKey: e.data.ctrlKey,
+                altKey: e.data.altKey,
+                metaKey: e.data.metaKey
+                }, '*');
+            }
             });<\/script>`;
         }
         try {
