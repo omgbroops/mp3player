@@ -1,4 +1,4 @@
-let ver = "v2.6r";
+let ver = "v2.96r";
 try {
   ver = version;
 } catch (e) { }
