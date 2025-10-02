@@ -606,6 +606,7 @@
         <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="saveses-label">Saving session...</span></span>
         <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-triangle-exclamation" style="margin:5px; margin-right:10px; color:#ff8b1f;"></i><span id="error-label">Error...</span></span>
         <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-circle-exclamation" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="info-label">Info...</span></span>
+        <span id="commandBuffer" style="display:none; z-index: 20px; margin: 20px; position: absolute; bottom: 0px; left: 0px; color: grey;"></span>
         <div id="menu" class="screen" style="flex-direction: column; display: none;">
             <div class="title is-3 t">Options</div> 
             <div class="menu-option" id="audioplayeropt">
@@ -3672,7 +3673,16 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             player.style.left = ''
             resetEq();
             loadSong();
-            if (f) saveSessionDB(true);
+            if (f) {
+              try {
+                  const transaction = db.transaction(["songs"], "readwrite");
+                  const store = transaction.objectStore("songs");
+                  store.clear();
+                  saveSessionDB(true);
+              } catch {
+                  displayMsg("Failed to reset songs database.", 'error');
+              };
+            }
         }
 
         function getDominantColor(imgElement) {
@@ -4182,6 +4192,14 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
         let lastWindowInteractedWith = player;
 
+        document.addEventListener('mousedown', (e) => {
+            if (enteringCommandBuffer) {
+              enteringCommandBuffer = false;
+              commandBuffer = "";
+              document.getElementById("commandBuffer").textContent = "";
+            }
+        });
+
         player.addEventListener('mousedown', (e) => {
             lastWindowInteractedWith.style.zIndex = 1;
             lastWindowInteractedWith = player;
@@ -4685,7 +4703,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         let enteringCommandBuffer = false;
         let commandBuffer = "";
 
-        const commands = ["play", "volume", "speed", "p", "v", "s", "dropbox", "dbx"];
+        const commands = ["play", "volume", "speed", "p", "v", "s", "add"];
         const audioExtensions = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"];
 
         const fuse = new Fuse(commands, { includeScore: true, threshold: 0.4 });
@@ -4713,7 +4731,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             return result.length > 0 ? result[0].item : audioFiles[0];
         }
 
-        document.addEventListener('keydown', e => {
+        document.addEventListener('keydown', async e => {
             const typingElement = e.target;
             const isTyping = typingElement.tagName === 'INPUT' || typingElement.tagName === 'TEXTAREA' || typingElement.isContentEditable;
 
@@ -4721,7 +4739,6 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 return;
             }
             if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                if (enteringCommandBuffer && !sHidden) enteringCommandBuffer = false;
                 if (!enteringCommandBuffer) {
                     if (e.code === 'Space') {
                         e.preventDefault();
@@ -4733,6 +4750,12 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     else if (e.code === 'KeyR') toggleLoop();
                     else if (e.code === 'KeyL') toggleLibraryUI();
                     else if (e.code === 'KeyS') toggleShuffle();
+                    else if (sHidden && e.key === '/') {
+                        enteringCommandBuffer = true;
+                        commandBuffer = "";
+                        document.getElementById('commandBuffer').textContent = commandBuffer;
+                        return;
+                    }
                     if (!sHidden) {
                         if (e.code === 'KeyM') toggleMenuOption('m');
                         else if (e.code === 'KeyD') {
@@ -4768,74 +4791,97 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                             lastWindowInteractedWith.style.left = '';
                             lastWindowInteractedWith.style.top = '';
                         }
-                        else if (e.code === 'Escape') openModal();
+                        else if (e.code === 'Escape') {
+                          enteringCommandBuffer = false;
+                          document.getElementById('commandBuffer').textContent = "";
+                          commandBuffer = "";
+                          openModal();
+                        }
                         else if (e.key === '/') toggleModal('shortcutsModal');
                     }
                 }
-                if (sHidden) {
-                    if (e.key === '/') {
-                        enteringCommandBuffer = !enteringCommandBuffer;
+                if (enteringCommandBuffer) {
+                    if (e.key === 'Backspace') {
+                        commandBuffer = commandBuffer.slice(0, -1);
+                    } else if (e.key.length === 1) {
+                        commandBuffer += e.key;
+                    } else if (e.key === 'Escape' || e.key === '/') {
+                        enteringCommandBuffer = false;
                         commandBuffer = "";
-                    }
-                    if (enteringCommandBuffer) {
-                        if (e.key === 'Backspace') {
-                            commandBuffer = commandBuffer.slice(0, -1);
-                        } else if (e.key.length === 1) {
-                            commandBuffer += e.key;
-                        } else if (e.key === 'Enter') {
-                            const commandSplit = commandBuffer.split(" ")[0];
-                            const result = fuse.search(commandSplit.trim().toLowerCase());
-                            if (result.length > 0) {
-                                enteringCommandBuffer = false;
-                                const bestMatch = result[0].item;
-                                if (bestMatch == "play" || bestMatch == "p") {
-                                    const searchingSong = fuseSongs.search(commandBuffer.replace(commandSplit, "").trim().toLowerCase());
-                                    if (searchingSong.length > 0) {
-                                        const song = searchingSong[0].item;
-                                        if (song) {
-                                            console.log(song);
-                                            const playlist = playlists.find(p => p.id == song.playlists[0]);
-                                            if (playlist) {
-                                                const songInPlaylist = playlist.songs.find(s => s == song.id);
-                                                if (songInPlaylist) {
-                                                    currentVisiblePlaylist = playlist.id;
-                                                    currentPlaylist = playlist.id;
-                                                    playSelectedSong(songInPlaylist);
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else if (bestMatch == "volume" || bestMatch == "v") {
-                                    const volString = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
-                                    let vol = parseInt(volString);
-                                    if (!isNaN(vol)) {
-                                        vol = Math.min(Math.max(vol, 0), 100);
-                                        updateVolume(vol / 100);
-                                    }
-                                } else if (bestMatch == "speed" || bestMatch == "s") {
-                                    const speedString = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
-                                    let spd = parseFloat(speedString);
-                                    if (!isNaN(spd)) {
-                                        spd = Math.min(Math.max(spd, 0.5), 1.5);
-                                        speedControl.value = ((spd - 0.5) / (1.5 - 0.5)) * 100;
-                                        updateSpeed(spd);
-                                    }
-                                } else if (bestMatch == "dropbox" || bestMatch == "dbx") {
-                                    if (!dToken) return dropboxOauth();
-                                    const query = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
+                    } else if (e.key === 'Enter') {
+                        if (commandBuffer.substring(0, 1) === "/") commandBuffer = commandBuffer.substring(1);
+                        const commandSplit = commandBuffer.split(" ")[0];
+                        const result = fuse.search(commandSplit.trim().toLowerCase());
+                        enteringCommandBuffer = false;
+                        document.getElementById('commandBuffer').textContent = "";
+                        if (result.length > 0) {
+                            const bestMatch = result[0].item;
+                            if (bestMatch == "play" || bestMatch == "p") {
+                                const searchingSong = fuseSongs.search(commandBuffer.replace(commandSplit, "").trim().toLowerCase());
+                                let failed = true;
+                                if (searchingSong.length > 0) {
+                                  const song = searchingSong[0].item;
+                                  if (song) {
+                                      const playlist = playlists.find(p => p.id == song.playlists[0]);
+                                      if (playlist) {
+                                          const songInPlaylist = playlist.songs.find(s => s == song.id);
+                                          if (songInPlaylist) {
+                                            failed = false;
+                                            currentVisiblePlaylist = playlist.id;
+                                            currentPlaylist = playlist.id;
+                                            updatePlaylistUI();
+                                            playSelectedSong(songInPlaylist);
+                                          }
+                                      }
+                                  }
+                                }
+                                if (failed) {
+                                    if (!dToken) await dropboxOauth();
+                                    if (dToken) {
+                                      const query = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
 
-                                    searchDropboxFiles(query).then(async data => {
-                                        const file = await pickClosestDropboxFile(query, data);
-                                        if (file) {
-                                            downloadDropboxFile(file.path_lower);
-                                        } else {
-                                            console.log("No matching audio file found in Dropbox.");
-                                        }
-                                    });
+                                      searchDropboxFiles(query).then(async data => {
+                                          const file = await pickClosestDropboxFile(query, data);
+                                          if (file) {
+                                              downloadDropboxFile(file.path_lower);
+                                          } else {
+                                              console.log("No matching audio file found in Dropbox.");
+                                          }
+                                      });
+                                    }
+                                  }
+                            } else if (bestMatch == "volume" || bestMatch == "v") {
+                                const volString = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
+                                let vol = parseInt(volString);
+                                if (!isNaN(vol)) {
+                                    vol = Math.min(Math.max(vol, 0), 100);
+                                    updateVolume(vol / 100);
+                                }
+                            } else if (bestMatch == "speed" || bestMatch == "s") {
+                                const speedString = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
+                                let spd = parseFloat(speedString);
+                                if (!isNaN(spd)) {
+                                    spd = Math.min(Math.max(spd, 0.5), 1.5);
+                                    speedControl.value = ((spd - 0.5) / (1.5 - 0.5)) * 100;
+                                    updateSpeed(spd);
+                                }
+                            } else if (bestMatch == "add") {
+                                if (!dToken) await dropboxOauth();
+                                if (dToken) {
+                                  const query = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
+
+                                  searchDropboxFiles(query).then(async data => {
+                                      const file = await pickClosestDropboxFile(query, data);
+                                      if (file) {
+                                          downloadDropboxFile(file.path_lower, true);
+                                      } else {
+                                          console.log("No matching audio file found in Dropbox.");
+                                      }
+                                  });
                                 }
                             }
-                            commandBuffer = "";
                         }
+                        commandBuffer = "";
                     }
                 }
             }
@@ -4874,12 +4920,22 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     toggleScreen();
                 } else if (e.code == "KeyD") {
                     if (!dToken) dropboxOauth();
+                } else if (e.key === '/' || e.key === '?') {
+                    enteringCommandBuffer = !enteringCommandBuffer;
+                    commandBuffer = "";
+                    document.getElementById('commandBuffer').textContent = commandBuffer;
+                } else if (e.key === 'S') {
+                    document.getElementById('commandBuffer').style.display = document.getElementById('commandBuffer').style.display == "none" ? '' : 'none';
                 }
                 return;
             }
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 if (e.code === 'KeyS') saveSessionDB();
+                if (enteringCommandBuffer && e.key == "Backspace") {
+                  commandBuffer = "";
+                  document.getElementById('commandBuffer').textContent = commandBuffer;
+                }
                 if (!sHidden) {
                     if (e.code === 'KeyR') toggleModal('resetModal');
                     else if (e.code === 'KeyV') canvas.classList.toggle("hidden");
@@ -4897,6 +4953,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 else if (e.code === 'ArrowDown') updateSpeedFromKeyboard(-0.02);
                 return;
             }
+            document.getElementById('commandBuffer').textContent = commandBuffer;
         });
         function dropboxOauth() {
             if (dToken) return;
@@ -4925,6 +4982,15 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     
                 }
             }, 500);
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (!popup || popup.closed) {
+                        clearInterval(checkInterval);
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 500);
+            });
         }
         async function searchDropboxFiles(query) {
             if (!dToken) return;
@@ -4946,7 +5012,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
             return data;
         }
-        async function downloadDropboxFile(path) {
+        async function downloadDropboxFile(path, dontPlay) {
             if (!dToken) return;
             const res = await fetch("https://content.dropboxapi.com/2/files/download", {
                 method: "POST",
@@ -4964,7 +5030,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
 
             jsmediatags.read(blob, {
                 onSuccess: async function(tag) {
-                    createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", null, null, atp, null, blob, true);
+                    createSongDiv(tag.tags.title || file.name, tag.tags.picture, tag.tags.artist || "Unknown artist", null, null, atp, null, blob, !dontPlay);
                 },
                 onError: function(error) {
                     displayMsg("Error reading song metadata: " + error, 'error');
