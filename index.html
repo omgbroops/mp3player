@@ -600,12 +600,12 @@
 
         </style>
     </head>
-    <body class="cs">
+    <body class="cs" style="background-color: white;">
         <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js"></script>
-        <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="impses-label">Importing session...</span></span>
-        <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="saveses-label">Saving session...</span></span>
-        <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-triangle-exclamation" style="margin:5px; margin-right:10px; color:#ff8b1f;"></i><span id="error-label">Error...</span></span>
-        <span class="button bot-btn top-label fade" style="cursor: default; position: absolute;"><i class="fa-solid fa-circle-exclamation" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="info-label">Info...</span></span>
+        <span class="button bot-btn top-label fade hidden" style="cursor: default; position: absolute;" id="impseswrapper"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="impses-label">Importing session...</span></span>
+        <span class="button bot-btn top-label fade hidden" style="cursor: default; position: absolute;" id="saveseswrapper"><i class="fa-solid fa-bars-progress" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="saveses-label">Saving session...</span></span>
+        <span class="button bot-btn top-label fade hidden" style="cursor: default; position: absolute;" id="errorwrapper"><i class="fa-solid fa-triangle-exclamation" style="margin:5px; margin-right:10px; color:#ff8b1f;"></i><span id="error-label">Error...</span></span>
+        <span class="button bot-btn top-label fade hidden" style="cursor: default; position: absolute;" id="infowrapper"><i class="fa-solid fa-circle-exclamation" style="margin:5px; margin-right:10px; color: #389ae5;"></i><span id="info-label">Info...</span></span>
         <span id="commandBuffer" style="display:none; z-index: 20px; margin: 20px; position: absolute; bottom: 0px; left: 0px; color: grey;"></span>
         <div id="menu" class="screen" style="flex-direction: column; display: none;">
             <div class="title is-3 t">Options</div> 
@@ -647,7 +647,7 @@
                 <iframe id="preview" sandbox="allow-scripts allow-forms allow-modals allow-same-origin allow-pointer-lock allow-forms allow-top-navigation"></iframe>
             </div>
         </div>
-        <div id="mp3player" class="screen">
+        <div id="mp3player" class="screen" style="display: none;">
             <div id="shortcutsModal" class="modal">
                 <div class="modal-background"></div>
                 <div class="modal-card">
@@ -898,7 +898,7 @@
                     </div>
                 </div>
             </div>
-            <div class="player" id="player">
+            <div class="player hidden" id="player">
                 <canvas id="visualizer" class="visualizer" class="hidden"></canvas>
                 <div>
                     <button class="icon-button loop-btn ig" onclick="toggleLoop()">
@@ -3658,7 +3658,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             lHidden = true;
             pHidden = false;
             bHidden = false;
-            sHidden = false;
+            sHidden = true;
             seHidden = true;
             oHidden = true;
             oscillator.classList.add("hidden");
@@ -4518,20 +4518,20 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 htmlSandboxScreen.style.display = "none";
                 audioPlayerScreen.style.display = "none"; 
                 mainMenu.style.display = "none";
-                infoLabel.classList.add('hidden');
-                errorLabel.classList.add('hidden');
-                impSesLabel.classList.add('hidden');
-                saveSesLabel.classList.add('hidden');
+                document.getElementById('infowrapper').classList.add('hidden');
+                document.getElementById('errorwrapper').classList.add('hidden');
+                document.getElementById('impseswrapper').classList.add('hidden');
+                document.getElementById('saveseswrapper').classList.add('hidden');
             } else {
                 document.body.style.backgroundColor = "";
                 togglePlayer(pHidden, true);
                 toggleMenuOption("h", hsHidden, true);
                 toggleMenuOption("p", apHidden, true);
                 toggleMenuOption("m", mmHidden, true);
-                infoLabel.classList.remove('hidden');
-                errorLabel.classList.remove('hidden');
-                impSesLabel.classList.remove('hidden');
-                saveSesLabel.classList.remove('hidden');
+                document.getElementById('infowrapper').classList.remove('hidden');
+                document.getElementById('errorwrapper').classList.remove('hidden');
+                document.getElementById('impseswrapper').classList.remove('hidden');
+                document.getElementById('saveseswrapper').classList.remove('hidden');
             } 
         }
         let wasInMainMenu = false;
@@ -4625,7 +4625,6 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             resetS();
             try {
                 const library = session.library || {allSongs: [], playlists: []};
-                console.log(library);
                 const settings = session.settings || {notLoaded: true};
                 currentPlaylist = settings.currentPlaylist || "0";
                 currentVisiblePlaylist = currentVisiblePlaylist || "0";
@@ -4682,6 +4681,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                         }
                         drawEq();
                     }
+                } else {
+                  toggleScreen();
                 }
             } catch(e) {
                 console.log(e);
@@ -4703,7 +4704,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
         let enteringCommandBuffer = false;
         let commandBuffer = "";
 
-        const commands = ["play", "volume", "speed", "p", "v", "s", "add"];
+        const commands = ["play", "pause", "delete", "remove", "next", "skip", "previous", "seek", "volume", "speed", "p", "v", "s", "add"];
         const audioExtensions = [".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"];
 
         const fuse = new Fuse(commands, { includeScore: true, threshold: 0.4 });
@@ -4878,6 +4879,19 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                                           console.log("No matching audio file found in Dropbox.");
                                       }
                                   });
+                                }
+                            } else if (bestMatch == "pause") {
+                                if (!audio.paused) togglePlay();
+                            } else if (bestMatch == "skip" || bestMatch == "next") {
+                                nextSong();
+                            } else if (bestMatch == "previous") {
+                                prevSong();
+                            } else if (bestMatch == "seek") {
+                                const seekString = commandBuffer.replace(commandSplit, "").trim().toLowerCase();
+                                let seek = parseInt(seekString);
+                                if (!isNaN(seek)) {
+                                    seek = Math.min(Math.max(seek, 0), Math.floor(audio.duration));
+                                    audio.currentTime = seek;
                                 }
                             }
                         }
