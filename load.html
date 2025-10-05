@@ -38,9 +38,10 @@
 </div>
 <script id="script">
 let token;
+const apk = "6e0uufvam3vwl67";
 function dropboxOauth() {
   const redirectUri = window.location.origin + window.location.pathname;
-  const oauthUrl = 'https://www.dropbox.com/oauth2/authorize?client_id=' + APP_KEY + '&response_type=token&redirect_uri='+encodeURIComponent(redirectUri);
+  const oauthUrl = 'https://www.dropbox.com/oauth2/authorize?client_id=' + apk + '&response_type=token&redirect_uri='+encodeURIComponent(redirectUri);
   const popup = window.open(oauthUrl, "dropboxAuth", "width=600,height=600");
   let lastUrl = '';
   const interval = setInterval(() => {
@@ -86,7 +87,7 @@ document.getElementById("open-player").addEventListener("click", function (e) {
         '<body>' +
         '<script>const token = "' + token + '";<\/script>' +
         '<script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" ' +
-        'id="dropboxjs" data-app-key="' + APP_KEY + '"><\/script>' +
+        'id="dropboxjs" data-app-key="' + apk + '"><\/script>' +
         html +
         '</body>' +
         '</html>'
