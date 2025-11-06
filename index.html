@@ -613,6 +613,63 @@
               font-family: "Inter", sans-serif;
             }
 
+            .switch {
+              position: relative;
+              display: inline-block;
+              width: 50px;
+              height: 26px;
+            }
+
+            .switch input {
+              opacity: 0;
+              width: 0;
+              height: 0;
+            }
+
+            .slider {
+              position: absolute;
+              cursor: pointer;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: #31343b;
+              transition: 0.3s;
+              border-radius: 34px;
+            }
+
+            .slider:before {
+              position: absolute;
+              content: "";
+              height: 20px;
+              width: 20px;
+              left: 3px;
+              bottom: 3px;
+              background-color: white;
+              transition: 0.3s;
+              border-radius: 50%;
+            }
+
+            input:checked + .slider {
+              background-color: rgb(71, 158, 71);
+            }
+
+            input:checked + .slider:before {
+              transform: translateX(24px);
+            }
+
+            .one-line-textbox {
+              background: rgba(255, 255, 255, 0.05);
+              backdrop-filter: blur(20px) saturate(150%);
+              -webkit-backdrop-filter: blur(20px) saturate(150%);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 20px;
+              color: white;
+              padding: 0.5em 0.75em;
+              height: auto;
+              line-height: 1.2;
+            }
+
         </style>
     </head>
     <body class="cs" style="background-color: white;">
@@ -1068,6 +1125,24 @@
                     <div id="volumeCol" style="width:96%; padding:15px; padding-left:10px;">  
                         <span id="volumeDisplay">Volume: 100%</span>
                         <progress class="progress is-small ig" style="height: 8px; background:#31343b; margin-bottom: 0px; margin-top: 5px;" id="volume" value="100" max="100"></progress>
+                    </div>
+                    <div id="showSongInMediaPlayerCol" style="width:96%; padding:15px; padding-left:10px;">  
+                        <span id="showSongInMediaPlayerDisplay">Show song in media player</span>
+                        <label class="switch" style="left:51%;">
+                          <input type="checkbox" id="showSongInMediaPlayerToggle" hecked>
+                          <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="smartMediaControlCol" style="width:96%; padding:15px; padding-left:10px;">  
+                        <span id="smartMediaControlDisplay">Double/triple click for next/previous on headphones</span>
+                        <label class="switch" style="left: 14.3%;">
+                          <input type="checkbox" id="smartMediaControlToggle" hecked>
+                          <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="smartMediaControlThresholdCol" style="width:96%; padding:15px; padding-left:10px; display: none;">  
+                        <span id="smartMediaControlThresholdDisplay">Threshold for clicks in ms</span>
+                        <input class="input one-line-textbox" id="smartMediaControlThresholdInput" style="margin-left:0px; margin-bottom: 0px; margin-top: 5px; width: 94.5%;" type="text" placeholder="in ms..." value="225">
                     </div>
                     <div style="margin-top: 15px;">
                         <span style="margin-left: 15px;" class="title is-4">EQ<button class="button reset-eq-btn" onclick="resetEq()" style="top: -5px; left: 15px;">Reset</button></span>
@@ -4193,9 +4268,10 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                         playIcon.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAsdQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////hq6ANQAAAO10Uk5TACRZjL3O2+j1//DEsp2GYCwydbfx98ORXRlcqey4CJTuPwFf0NVXDHTjevJbQtzUO7CsH0TthAqA/eUSvMs0/qEWK+rzeQfeUvnAOPyWM28EJ0bXsyK0iw196WQ8z9ioHPb44rEv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';
                     }
                 } catch(e) {
-                    console.log(e);
+                    displayMsg("Error loading song: " + e, 'error');
                 }
             }
+            updateMediaAPI();
         }
 
         animateBackground();
@@ -4701,6 +4777,54 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 document.getElementById('saveseswrapper').classList.remove('hidden');
             } 
         }
+        let smartMediaControlThreshold = 225;
+        const showSongInMediaPlayerToggle = document.getElementById('showSongInMediaPlayerToggle');
+        const smartMediaControlToggle = document.getElementById('smartMediaControlToggle');
+        const smartMediaControlThresholdInput = document.getElementById('smartMediaControlThresholdInput');
+        const smartMediaControlThresholdCol = document.getElementById('smartMediaControlThresholdCol');
+        smartMediaControlThresholdInput.addEventListener('change', () => {
+            updateSmartMediaControlThreshold(parseInt(smartMediaControlThresholdInput.value));
+        });
+        function updateSmartMediaControlThreshold(val) {
+            if (isNaN(val) || val < 0) val = 0;
+            if (val > 1000) val = 1000;
+            smartMediaControlThreshold = val;
+            smartMediaControlThresholdInput.value = val;
+        }
+        function updateSmartMediaControlColVisibility() {
+            if (smartMediaControlToggle.checked) {
+                smartMediaControlThresholdCol.style.display = "";
+            } else {
+                smartMediaControlThresholdCol.style.display = "none";
+            }
+        }
+        smartMediaControlToggle.addEventListener('change', updateSmartMediaControlColVisibility);
+        function updateMediaAPI() {
+            if (showSongInMediaPlayerToggle.checked) {
+              const song = allSongs.find(s => s.id == currentSongId);
+              if (song) {
+                  if ('mediaSession' in navigator) {
+                      navigator.mediaSession.metadata = new MediaMetadata({
+                          title: song.title,
+                          artist: song.artist,
+                          album: '',
+                      });
+                      if (song.cover != defaultCover) {
+                          navigator.mediaSession.metadata.artwork = [
+                              { src: song.cover, sizes: '512x512', type: 'image/png' }
+                          ];
+                      }
+                  }
+              }
+            } else {
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                  title: "New Tab",
+              });
+              }
+            }
+        }
+        showSongInMediaPlayerToggle.addEventListener('change', updateMediaAPI);
         let wasInMainMenu = false;
         function toggleMenuOption(s, v, f) {
             if (sHidden && !f) return;
@@ -4769,6 +4893,9 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     libraryUIHidden: lHidden, 
                     settingsUIHidden: seHidden, 
                     botButtonsHidden: bHidden, 
+                    showSongInMediaPlayer: showSongInMediaPlayerToggle.checked,
+                    smartMediaControl: smartMediaControlToggle.checked,
+                    smartMediaControlThreshold: smartMediaControlThreshold,
                     mmHidden: mmHidden,
                     apHidden: apHidden,
                     hsHidden: hsHidden,
@@ -4836,6 +4963,9 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                     updateSpeed(0.5 + (parseFloat(settings.speed || '0.5') / 100) * (1.5 - 0.5));
                     updateVolume(settings.volume);
                     backgroundVis = settings.bgvis;
+                    if (settings.smartMediaControlThreshold && !isNaN(settings.smartMediaControlThreshold)) { updateSmartMediaControlThreshold(settings.smartMediaControlThreshold); }
+                    if (settings.showSongInMediaPlayer) { showSongInMediaPlayerToggle.checked = true; updateMediaAPI(); }
+                    if (settings.smartMediaControl) { smartMediaControlToggle.checked = true; updateSmartMediaControlColVisibility(); }
                     if (settings.vis && canvas.classList.contains("hidden")) canvas.classList.remove("hidden");
                     if (settings.backgroundHidden) { if (!backgroundImage.classList.contains("hidden")) backgroundImage.classList.add("hidden"); choiceAP.style.background = defaultColor; choiceHS.style.background = defaultColor; }
                     player.style.top = settings.playerTop;
@@ -5032,11 +5162,14 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
               commandBuffer = "";
           }
         }
+        function seekAmount(seek) {
+            if (!isNaN(seek)) {
+                seek = audio.currentTime + seek;
+                seek = Math.min(Math.max(seek, 0), Math.floor(audio.duration));
+                audio.currentTime = seek;
+            }
+        }
         let isEditingMonaco = false;
-        let pl = "aHR0cHM6Ly9lZHUuYmV0aGlzcmFlbG1lZGlhLm9yZw==";
-        let plt = "aHR0cHM6Ly9hbHdheXN0cmF2ZWxpbmcudGhlcHJlc2VudHRyYXZlbGxlci5jb20=";
-        let plg = "aHR0cHM6Ly9nbG9yaW91cy16ZWJyYS12Nmo2OXc1NWp3NmZ4cHh2LTIzNDUuYXBwLmdpdGh1Yi5kZXYv"; 
-        let pc = "aW5hcA==";
         document.addEventListener('keydown', async e => {
             const typingElement = e.target;
             const isTyping = typingElement.tagName === 'INPUT' || typingElement.tagName === 'TEXTAREA' || typingElement.isContentEditable;
@@ -5045,23 +5178,12 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 return;
             }
             e.preventDefault();
-            if (e.ctrlKey && e.altKey && e.shiftKey && e.code === 'KeyP') {
-                if (vsLoaded || htmlEditor) {
-                  let value = vsLoaded ? htmlEditor.getValue() : htmlEditor.value;
-                  let de = atob(pc);
-                  if (value.trim().startsWith(de)) {
-                    const t = value.trim().substring(de.length).trim();
-                    let ltg = btoa(t) == "Zw==" ? plg : (btoa(t) == "dA==" ? plt : (value.trim() == de ? pl : null));
-                    if (ltg) htmlPreview.srcdoc = pC.replace("plsrche", "src='" + atob(ltg) + "'") + `<style>body{ margin: 0px; }</style><script>${loaderS}<\/script>`;
-                  }
-                }
-            }
             if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                 if (!enteringCommandBuffer) {
                     if (e.code === 'Space') {
                         togglePlay();
-                    } else if (e.code === 'ArrowRight') nextSong();
-                    else if (e.code === 'ArrowLeft') prevSong();
+                    } else if (e.code === 'ArrowRight') seekAmount(5);
+                    else if (e.code === 'ArrowLeft') seekAmount(-5);
                     else if (e.code === 'ArrowUp') updateVolume(Math.min(Math.max(audio.volume + 0.05, 0), 1));
                     else if (e.code === 'ArrowDown') updateVolume(Math.min(Math.max(audio.volume - 0.05, 0), 1));
                     else if (e.code === 'KeyR') toggleLoop();
@@ -5184,6 +5306,8 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 if (!sHidden && e.code === 'KeyS') toggleSettingsUI();
                 else if (e.code === 'ArrowUp') updateSpeedFromKeyboard(0.02);
                 else if (e.code === 'ArrowDown') updateSpeedFromKeyboard(-0.02);
+                else if (e.code === 'ArrowRight') nextSong();
+                else if (e.code === 'ArrowLeft') prevSong();
                 return;
             }
             document.getElementById('commandBuffer').textContent = commandBuffer;
@@ -5491,15 +5615,35 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
             }
         }
 
+        let pressCount = 0;
+        let pressTimer = null;
+        
+        function handleMediaButton() {
+          if (smartMediaControlToggle.checked == false) {
+            return togglePlay();
+          }
+          pressCount++;
+
+          if (pressTimer) clearTimeout(pressTimer);
+
+          pressTimer = setTimeout(() => {
+            if (pressCount === 1) {
+              togglePlay();
+            } else if (pressCount === 2) {
+              nextSong();
+            } else if (pressCount >= 3) {
+              prevSong();
+            }
+            pressCount = 0;
+          }, smartMediaControlThreshold);
+        }
+
         async function loadSessionDB() {
           if (!handlersInitialized) {
-            navigator.mediaSession.setActionHandler('play', () => {
-                if (audio.paused) togglePlay();
-            });
+            handlersInitialized = true;
+            navigator.mediaSession.setActionHandler('play', handleMediaButton);
 
-            navigator.mediaSession.setActionHandler('pause', () => {
-                if (!audio.paused) togglePlay();
-            });
+            navigator.mediaSession.setActionHandler('pause', handleMediaButton);
 
             navigator.mediaSession.setActionHandler('previoustrack', () => {
                 prevSong();
@@ -9468,10 +9612,6 @@ var define, AMDLoader;
                isP = htmlPreview.contentWindow.document.getElementById("preview-iframe");
                 value = (isP) ? htmlPreview.contentWindow.document.body.innerHTML : ugsGamesC;
                 value += `<script>${loaderSG}<\/script>`;
-              } else if (value.trim().startsWith(atob(pc)) && !htmlPreview.contentWindow.document.body.textContent.startsWith(atob(pc))) {
-                const t = value.trim().substring(atob(pc).length).trim();
-                let ltg = btoa(t) == "Zw==" ? plg : (btoa(t) == "dA==" ? plt : (value.trim() == atob(pc) ? pl : null));
-                if (ltg) value = pC.replace("plsrche", "src='" + atob(ltg) + "'");
               }
               var w = window.open("about:blank", "_blank"); w.document.body.style.margin = "0"; w.document.body.style.padding = "0"; w.document.documentElement.style.margin = "0"; w.document.documentElement.style.padding = "0"; var f = w.document.createElement("iframe"); f.style.width = "100%"; f.style.height = "100%"; f.style.border = "none"; f.srcdoc = value; w.document.body.appendChild(f);
               f.onload = () => {
