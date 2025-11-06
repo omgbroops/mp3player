@@ -613,20 +613,20 @@
               font-family: "Inter", sans-serif;
             }
 
-            .switch {
+            .switch-toggle {
               position: relative;
               display: inline-block;
               width: 50px;
               height: 26px;
             }
 
-            .switch input {
+            .switch-toggle input {
               opacity: 0;
               width: 0;
               height: 0;
             }
 
-            .slider {
+            .slider-switch {
               position: absolute;
               cursor: pointer;
               top: 0;
@@ -638,7 +638,7 @@
               border-radius: 34px;
             }
 
-            .slider:before {
+            .slider-switch:before {
               position: absolute;
               content: "";
               height: 20px;
@@ -650,11 +650,11 @@
               border-radius: 50%;
             }
 
-            input:checked + .slider {
+            input:checked + .slider-switch {
               background-color: rgb(71, 158, 71);
             }
 
-            input:checked + .slider:before {
+            input:checked + .slider-switch:before {
               transform: translateX(24px);
             }
 
@@ -1128,21 +1128,21 @@
                     </div>
                     <div id="showSongInMediaPlayerCol" style="width:96%; padding:15px; padding-left:10px;">  
                         <span id="showSongInMediaPlayerDisplay">Show song in media player</span>
-                        <label class="switch" style="left:51%;">
+                        <label class="switch-toggle" style="left:51%;">
                           <input type="checkbox" id="showSongInMediaPlayerToggle" hecked>
-                          <span class="slider"></span>
+                          <span class="slider-switch"></span>
                         </label>
                     </div>
                     <div id="smartMediaControlCol" style="width:96%; padding:15px; padding-left:10px;">  
                         <span id="smartMediaControlDisplay">Double/triple click for next/previous on headphones</span>
-                        <label class="switch" style="left: 14.3%;">
+                        <label class="switch-toggle" style="left: 14.3%;">
                           <input type="checkbox" id="smartMediaControlToggle" hecked>
-                          <span class="slider"></span>
+                          <span class="slider-switch"></span>
                         </label>
                     </div>
                     <div id="smartMediaControlThresholdCol" style="width:96%; padding:15px; padding-left:10px; display: none;">  
                         <span id="smartMediaControlThresholdDisplay">Threshold for clicks in ms</span>
-                        <input class="input one-line-textbox" id="smartMediaControlThresholdInput" style="margin-left:0px; margin-bottom: 0px; margin-top: 5px; width: 94.5%;" type="text" placeholder="in ms..." value="225">
+                        <input class="input one-line-textbox" id="smartMediaControlThresholdInput" style="margin-left:0px; margin-bottom: 0px; margin-top: 5px; width: 94.5%;" type="text" placeholder="in ms..." value="200">
                     </div>
                     <div style="margin-top: 15px;">
                         <span style="margin-left: 15px;" class="title is-4">EQ<button class="button reset-eq-btn" onclick="resetEq()" style="top: -5px; left: 15px;">Reset</button></span>
@@ -4777,7 +4777,7 @@ b){(new g(a)).read(b)},Reader:g,Config:q}},{"./ArrayFileReader":3,"./BlobFileRea
                 document.getElementById('saveseswrapper').classList.remove('hidden');
             } 
         }
-        let smartMediaControlThreshold = 225;
+        let smartMediaControlThreshold = 200;
         const showSongInMediaPlayerToggle = document.getElementById('showSongInMediaPlayerToggle');
         const smartMediaControlToggle = document.getElementById('smartMediaControlToggle');
         const smartMediaControlThresholdInput = document.getElementById('smartMediaControlThresholdInput');
