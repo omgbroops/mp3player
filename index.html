@@ -7413,7 +7413,7 @@ var define, AMDLoader;
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>YouTube Player</title>
+  <title></title>
   <style>
     @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
@@ -7498,6 +7498,15 @@ var define, AMDLoader;
       </div>
     </div>
 
+    <div class="field mt-3">
+      <div class="control">
+        <label class="checkbox has-text-grey-lighter">
+          <input id="allowPopups" type="checkbox">
+          <span style="margin-left: 0.5rem;">Allow popups</span>
+        </label>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -7529,6 +7538,9 @@ var define, AMDLoader;
         f.style.width = "100%"; 
         f.style.height = "100%"; 
         f.style.border = "none"; 
+        if (!allowPopups.checked) {
+          f.setAttribute("sandbox", "allow-scripts allow-forms allow-modals allow-same-origin allow-pointer-lock allow-forms allow-top-navigation");
+        }
         if (isp(u)) {
           f.srcdoc = u;
         } else {
