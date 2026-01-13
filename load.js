@@ -1,4 +1,4 @@
-let ver = "v2.99r";
+let ver = "v2.995r";
 let sh = false;
 try {
   ver = version;
